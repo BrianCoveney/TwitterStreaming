@@ -1,7 +1,0 @@
-syntax = "proto3";
-package Transport;
-
-message Tweet {
-    string id = 1;
-    string name = 2;
-}

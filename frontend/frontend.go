@@ -1,13 +1,13 @@
-package frontend
+package main
 
 import (
-	"net/http"
-	"sync"
-	"os"
 	"fmt"
-	"github.com/gorilla/mux"
 	"time"
+	"os"
+	"github.com/gorilla/mux"
+	"sync"
 	"github.com/nats-io/nats"
+	"net/http"
 	"github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/golang/protobuf/proto"
 )
@@ -16,9 +16,6 @@ var nc *nats.Conn
 
 func main() {
 	uri := os.Getenv("NATS_URI")
-
-	//myName := stringutil.MyName
-	//fmt.Print(myName)
 
 	var err error
 
@@ -32,12 +29,16 @@ func main() {
 	m := mux.NewRouter()
 	m.HandleFunc("/{id}", handleTwitterUser)
 
-	http.ListenAndServe(":3000", m)
+	port := ":3001"
+
+	http.ListenAndServe(port, m)
+	fmt.Println("Connected to NATS server on port " + port)
+
 }
 
-func handleTwitterUser(w http.ResponseWriter, r *http.Request)  {
+func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	myUser := Transport.Tweet{Id: vars["id"]}
+	myUser := Transport.User{Id: vars["id"]}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -50,9 +51,9 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request)  {
 			return
 		}
 
-		msg, err := nc.Request("UserNameById", data, 100 * time.Millisecond)
+		msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			myUserWithName := Transport.Tweet{}
+			myUserWithName := Transport.User{}
 			err := proto.Unmarshal(msg.Data, &myUserWithName)
 			if err == nil {
 				myUser = myUserWithName
@@ -60,7 +61,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request)  {
 		}
 		wg.Done()
 	}()
-
 
 	wg.Wait()
 

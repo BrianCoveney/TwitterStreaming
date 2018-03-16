@@ -9,16 +9,26 @@ services:
     ports:
       - "8222:8222"
     hostname: nats-server
-  twitter-service:
-      build:
-        context: "./twitterservice"
-      entrypoint: /go/twitter-service
-      links:
-        - nats
-      environment:
-        - "NATS_URI=nats://nats:4222"
-      depends_on:
-        - nats
+  user-service:
+    build:
+      context: "./userservice"
+    entrypoint: /go/user-service
+    links:
+      - nats
+    environment:
+      - "NATS_URI=nats://nats:4222"
+    depends_on:
+      - nats
+  time-service:
+    build:
+      context: "./timeservice"
+    entrypoint: /go/time-service
+    links:
+      - nats
+    environment:
+      - "NATS_URI=nats://nats:4222"
+    depends_on:
+      - nats
   frontend:
     build:
       context: "./frontend"
