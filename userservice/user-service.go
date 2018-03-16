@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("Connected to NATS server " + uri)
+	fmt.Println("Connected to NATS " + uri)
 
 	users = make(map[string]string)
 	users["1"] = "Bob"

@@ -4,7 +4,7 @@ WORKDIR /go
 COPY . .
 
 RUN go get -d -v ./...
-RUN go build frontend.go
+RUN go build front-end.go
 
 EXPOSE 3000
-ENTRYPOINT ["/go/frontend"]
+ENTRYPOINT ["/go/frontendservice"]

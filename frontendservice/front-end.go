@@ -29,16 +29,14 @@ func main() {
 	m := mux.NewRouter()
 	m.HandleFunc("/{id}", handleTwitterUser)
 
-	port := ":3001"
-
-	http.ListenAndServe(port, m)
-	fmt.Println("Connected to NATS server on port " + port)
+	http.ListenAndServe(":3000", m)
 
 }
 
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	myUser := Transport.User{Id: vars["id"]}
+	curTime := Transport.Time{}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -62,8 +60,20 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}()
 
+	go func() {
+		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
+		if err == nil && msg != nil {
+			receivedTime := Transport.Time{}
+			err := proto.Unmarshal(msg.Data, &receivedTime)
+			if err == nil {
+				curTime = receivedTime
+			}
+		}
+		wg.Done()
+	}()
+
 	wg.Wait()
 
-	fmt.Fprintln(w, "Hello", myUser.Name, " with id ", myUser.Id, ".")
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the time is ", curTime.Time, ".")
 
 }

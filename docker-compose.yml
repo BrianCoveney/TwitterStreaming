@@ -31,8 +31,8 @@ services:
       - nats
   frontend:
     build:
-      context: "./frontend"
-    entrypoint: /go/frontend
+      context: "./frontendservice"
+    entrypoint: /go/front-end
     links:
       - nats
     environment:
