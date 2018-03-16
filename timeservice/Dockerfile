@@ -1,6 +1,6 @@
 FROM golang:1.9
 
-MAINTAINER larkin.cunningham
+MAINTAINER brian.coveney
 
 WORKDIR /go
 COPY . .

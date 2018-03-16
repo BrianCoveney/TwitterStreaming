@@ -1,14 +1,11 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"github.com/BrianCoveney/TwitterStreaming/transport"
-
+	"os"
 	"github.com/nats-io/nats"
-
 	"github.com/golang/protobuf/proto"
-
+	"github.com/BrianCoveney/TwitterStreaming/transport"
 )
 
 var users map[string]string

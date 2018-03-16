@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/golang/protobuf/proto"
 	"os"
 	"fmt"
 	"time"
 	"github.com/nats-io/nats"
-	"github.com/BrianCoveney/TwitterStreaming/transport"
-	"github.com/golang/protobuf/proto"
 )
 
 // We use globals because it's a small application demonstrating NATS.

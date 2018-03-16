@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/golang/protobuf/proto"
+	"github.com/BrianCoveney/TwitterStreaming/transport"
 	"fmt"
 	"time"
 	"os"
@@ -8,8 +10,6 @@ import (
 	"sync"
 	"github.com/nats-io/nats"
 	"net/http"
-	"github.com/BrianCoveney/TwitterStreaming/transport"
-	"github.com/golang/protobuf/proto"
 )
 
 var nc *nats.Conn
