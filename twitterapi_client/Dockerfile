@@ -4,6 +4,6 @@ WORKDIR /go
 COPY . .
 
 RUN go get -d -v ./...
-RUN go build server.go
+RUN go build twitterapi_client.go
 
-ENTRYPOINT ["/go/server"]
+ENTRYPOINT ["/go/twitterapi_client"]
