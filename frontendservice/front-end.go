@@ -10,9 +10,16 @@ import (
 	"sync"
 	"github.com/nats-io/nats"
 	"net/http"
+	pb "github.com/BrianCoveney/TwitterStreaming/twitter_route"
+	"google.golang.org/grpc"
+	"context"
+	"io"
+	"github.com/BrianCoveney/TwitterStreaming/sentiment"
 )
 
 var nc *nats.Conn
+var client pb.TwitterRouteClient
+
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -35,6 +42,11 @@ func main() {
 
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+
+	conn, _ := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	client := pb.NewTwitterRouteClient(conn)
+	var score = 0
+
 	myUser := Transport.User{Id: vars["id"]}
 	curTime := Transport.Time{}
 	wg := sync.WaitGroup{}
@@ -72,8 +84,36 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}()
 
+
+	go func() {
+
+		params := &pb.Params{
+			Track:         []string{"Bitcoin"},
+			Language:      []string{"en"},
+			StallWarnings: false,
+			Maxcount:      100,
+		}
+
+		stream, _ := client.GetTweets(context.Background(), params)
+
+		for {
+			tweet, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+
+			score, _ := sentiment.Run(tweet.Text)
+
+			tweet.Score = int32(score)
+		}
+
+		wg.Done()
+	}()
+
+
 	wg.Wait()
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the time is ")
+
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the time is ", score)
 
 }
