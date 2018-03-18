@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/dghubble/go-twitter/twitter"
-	pb "github.com/Twitter-streaming-sentiment-analysis/datacollection_service/twitter_route"
-	t "github.com/Twitter-streaming-sentiment-analysis/datacollection_service/twitterapi_client"
+	pb "github.com/BrianCoveney/TwitterStreaming/twitter_route"
+	t "github.com/BrianCoveney/TwitterStreaming/twitterapi_client"
 )
 
 const (
