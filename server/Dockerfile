@@ -1,6 +1,4 @@
-FROM golang:1.9
-
-MAINTAINER brian.coveney
+FROM golang:1.9.3
 
 WORKDIR /go
 COPY . .
