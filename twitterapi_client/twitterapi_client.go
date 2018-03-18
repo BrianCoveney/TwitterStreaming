@@ -4,10 +4,9 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/spf13/viper"
-	pb "github.com/BrianCoveney/TwitterStreaming/twitter_route"
+	pb "github.com/Twitter-streaming-sentiment-analysis/datacollection_service/twitter_route"
 	"fmt"
 	"reflect"
-	"github.com/BrianCoveney/stringutil/credentials"
 )
 
 var client *twitter.Client
@@ -15,10 +14,10 @@ var client *twitter.Client
 func Auth() {
 	// The twitter package provides a Client for accessing the Twitter API.
 	// Here we create a new twitter client using the credentials in the config file
-	config := oauth1.NewConfig(viper.GetString(credentials.ConsumerKey),
-		viper.GetString(credentials.ConsumerSecret))
-	token := oauth1.NewToken(viper.GetString(credentials.AccessToken),
-		viper.GetString(credentials.AccessSecret))
+	config := oauth1.NewConfig(viper.GetString("credentials.consumerKey"),
+		viper.GetString("credentials.consumerSecret"))
+	token := oauth1.NewToken(viper.GetString("credentials.accessToken"),
+		viper.GetString("credentials.accessSecret"))
 
 	// Authentication is handled by the http.Client which is
 	// passed to twitter NewClient as Oauth1
