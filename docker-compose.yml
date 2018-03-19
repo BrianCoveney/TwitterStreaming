@@ -41,3 +41,12 @@ services:
       - nats
     ports:
       - "3000:3000"
+  server:
+    build:
+      context: "./server"
+    entrypoint: /go/server
+  twitterapi_client:
+    build:
+      context: "./twitterapi_client"
+    entrypoint: /go/twitterapi_client
+

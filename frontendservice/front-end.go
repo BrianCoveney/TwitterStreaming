@@ -1,16 +1,21 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/BrianCoveney/TwitterStreaming/transport"
-	"fmt"
 	"time"
-	"os"
 	"github.com/gorilla/mux"
 	"sync"
 	"github.com/nats-io/nats"
 	"net/http"
-	pb "github.com/BrianCoveney/TwitterStreaming/twitter_route"
+	s "github.com/BrianCoveney/TwitterStreaming/server"
+	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	"google.golang.org/grpc"
 	"context"
 	"io"
@@ -43,9 +48,7 @@ func main() {
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	conn, _ := grpc.Dial("localhost:50051", grpc.WithInsecure())
-	client := pb.NewTwitterRouteClient(conn)
-	var score = 0
+
 
 	myUser := Transport.User{Id: vars["id"]}
 	curTime := Transport.Time{}
@@ -86,27 +89,44 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 
 	go func() {
+		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
+		if err == nil && msg != nil {
 
-		params := &pb.Params{
-			Track:         []string{"Bitcoin"},
-			Language:      []string{"en"},
-			StallWarnings: false,
-			Maxcount:      100,
-		}
+			conn, _ := grpc.Dial("localhost:5253", grpc.WithInsecure())
+			client := pb.NewTwitterRouteClient(conn)
 
-		stream, _ := client.GetTweets(context.Background(), params)
-
-		for {
-			tweet, err := stream.Recv()
-			if err == io.EOF {
-				break
+			params := &pb.Params{
+				Track:         []string{"Bitcoin"},
+				Language:      []string{"en"},
+				StallWarnings: false,
+				Maxcount:      100,
 			}
 
-			score, _ := sentiment.Run(tweet.Text)
+			stream, _ := client.GetTweets(context.Background(), params)
 
-			tweet.Score = int32(score)
+			// Wait for SIGINT and SIGTERM (HIT CTRL-C)
+			ch := make(chan os.Signal)
+			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+			log.Println(<-ch)
+
+			fmt.Println("Stopping Stream...")
+
+
+			for {
+				tweet, err := stream.Recv()
+				if err == io.EOF {
+					break
+				}
+
+				score, _ := sentiment.Run(tweet.Text)
+
+				tweet.Score = int32(score)
+			}
+
+			grpcServer := grpc.NewServer()
+			pb.RegisterTwitterRouteServer(grpcServer, &s.TwitterRouteServer{})
+
 		}
-
 		wg.Done()
 	}()
 
@@ -114,6 +134,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the time is ", score)
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the time is ")
 
 }

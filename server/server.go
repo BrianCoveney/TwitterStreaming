@@ -1,11 +1,14 @@
-package server
+package main
 
 import (
 	"log"
 
 	"github.com/dghubble/go-twitter/twitter"
-	pb "github.com/BrianCoveney/TwitterStreaming/twitter_route"
+	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	t "github.com/BrianCoveney/TwitterStreaming/twitterapi_client"
+	"os"
+	"fmt"
+	"github.com/nats-io/nats"
 )
 
 const (
@@ -14,6 +17,9 @@ const (
 )
 
 var limit int32
+
+var nc *nats.Conn
+
 
 // TwitterRouteServer Implements the generated
 // TwitterRouteServer interface made in the proto file
@@ -80,4 +86,22 @@ func (s *TwitterRouteServer) GetTweets(params *pb.Params, stream pb.TwitterRoute
 	}
 
 	return nil
+}
+
+func main() {
+
+	uri := os.Getenv("NATS_URI")
+
+	var err error
+
+	nc, err = nats.Connect(uri)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Connected to NATS server " + uri)
+
+	nc.QueueSubscribe("TimeTeller", "TimeTellers", GetTweets)
+	select {} // Block forever
 }

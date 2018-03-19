@@ -1,14 +1,19 @@
-package twitterapi_client
+package main
 
 import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
-	pb "github.com/BrianCoveney/TwitterStreaming/twitter_route"
+	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	"fmt"
 	"reflect"
+	"os"
+	"github.com/nats-io/nats"
+
 )
 
 var client *twitter.Client
+var nc *nats.Conn
+
 
 func Auth() {
 	// The twitter package provides a Client for accessing the Twitter API.
@@ -43,4 +48,22 @@ func GetStream(params *pb.Params) (*twitter.Stream, error) {
 
 	return stream, nil
 
+}
+
+func main() {
+
+	uri := os.Getenv("NATS_URI")
+
+	var err error
+
+	nc, err = nats.Connect(uri)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Connected to NATS server " + uri)
+
+	nc.QueueSubscribe("TimeTeller", "TimeTellers", GetStream)
+	select {} // Block forever
 }
