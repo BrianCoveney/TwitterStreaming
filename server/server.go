@@ -20,6 +20,24 @@ var limit int32
 
 var nc *nats.Conn
 
+func main() {
+
+	uri := os.Getenv("NATS_URI")
+
+	var err error
+
+	nc, err = nats.Connect(uri)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("Connected to NATS server " + uri)
+
+	//nc.QueueSubscribe("TimeTeller", "TimeTellers", GetTweets)
+	select {} // Block forever
+}
+
 
 // TwitterRouteServer Implements the generated
 // TwitterRouteServer interface made in the proto file
@@ -88,20 +106,3 @@ func (s *TwitterRouteServer) GetTweets(params *pb.Params, stream pb.TwitterRoute
 	return nil
 }
 
-func main() {
-
-	uri := os.Getenv("NATS_URI")
-
-	var err error
-
-	nc, err = nats.Connect(uri)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println("Connected to NATS server " + uri)
-
-	nc.QueueSubscribe("TimeTeller", "TimeTellers", GetTweets)
-	select {} // Block forever
-}
