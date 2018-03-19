@@ -29,6 +29,16 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
+  server:
+    build:
+      context: "./server"
+    entrypoint: /go/server
+    links:
+      - nats
+    environment:
+      - "NATS_URI=nats://nats:4222"
+    depends_on:
+      - nats
   frontend:
     build:
       context: "./frontendservice"
@@ -41,12 +51,6 @@ services:
       - nats
     ports:
       - "3000:3000"
-  server:
-    build:
-      context: "./server"
-    entrypoint: /go/server
-  twitterapi_client:
-    build:
-      context: "./twitterapi_client"
-    entrypoint: /go/twitterapi_client
+
+
 

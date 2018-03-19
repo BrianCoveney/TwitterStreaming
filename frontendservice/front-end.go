@@ -14,7 +14,6 @@ import (
 	"sync"
 	"github.com/nats-io/nats"
 	"net/http"
-	s "github.com/BrianCoveney/TwitterStreaming/server"
 	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	"google.golang.org/grpc"
 	"context"
@@ -123,8 +122,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 				tweet.Score = int32(score)
 			}
 
-			grpcServer := grpc.NewServer()
-			pb.RegisterTwitterRouteServer(grpcServer, &s.TwitterRouteServer{})
 
 		}
 		wg.Done()
