@@ -19,16 +19,6 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
-  time-service:
-    build:
-      context: "./timeservice"
-    entrypoint: /go/time-service
-    links:
-      - nats
-    environment:
-      - "NATS_URI=nats://nats:4222"
-    depends_on:
-      - nats
   server:
     build:
       context: "./server"

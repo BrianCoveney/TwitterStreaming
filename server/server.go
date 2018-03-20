@@ -4,11 +4,17 @@ import (
 	"log"
 
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/golang/protobuf/proto"
 	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
-	t "github.com/BrianCoveney/TwitterStreaming/twitterapi_client"
+	tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	"github.com/nats-io/nats"
 	"os"
 	"fmt"
-	"github.com/nats-io/nats"
+	"flag"
+	"github.com/coreos/pkg/flagutil"
+	"github.com/dghubble/oauth1"
+	"os/signal"
+	"syscall"
 )
 
 const (
@@ -19,6 +25,12 @@ const (
 var limit int32
 
 var nc *nats.Conn
+var tweets map[string]string
+var client *twitter.Client
+
+var twitterTest map[string]string
+
+
 
 func main() {
 
@@ -34,75 +46,121 @@ func main() {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	//nc.QueueSubscribe("TimeTeller", "TimeTellers", GetTweets)
+	twitterTest = make(map[string]string)
+	twitterTest["1"] = "Bob"
+	twitterTest["2"] = "John"
+	twitterTest["3"] = "Dan"
+	twitterTest["4"] = "Kate"
+
+
+
+	nc.QueueSubscribe("Tweet", "Twitter", replyWithUserId)
 	select {} // Block forever
 }
 
 
-// TwitterRouteServer Implements the generated
-// TwitterRouteServer interface made in the proto file
-type TwitterRouteServer struct{}
+func replyWithUserId(m *nats.Msg) {
 
-// GetTweets creates a stream of tweets for the given params
-// to be searched for from the twitter api
-func (s *TwitterRouteServer) GetTweets(params *pb.Params, stream pb.TwitterRoute_GetTweetsServer) error {
+	log.Print("Log message")
 
-	errors := make(chan error)
-
-	var streamcount int32
-	// Here add or own feature to mutate
-	// the stream from the twitter client
-	limit = streamMin
-	if params.Maxcount != 0 {
-		if params.Maxcount >= streamMin && params.Maxcount <= streamMax {
-			limit = params.Maxcount
-		}
-	}
-
-	ts, err := t.GetStream(params)
+	myTweet := tr.Tweet{}
+	err := proto.Unmarshal(m.Data, &myTweet)
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return
 	}
 
-	// Run go routine to close the
-	// twitter channel
-	go func() {
-		<-errors
-		log.Print("Closing twitter stream")
-		ts.Stop()
-	}()
+	myTweet.Text = twitterTest[myTweet.Text]
+	data, err := proto.Marshal(&myTweet)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	// Receives messages and type switches them to
-	// call functions with typed messages. As we are
-	// only interested in the tweets we only add the
-	// 'Tweet' handler
+	fmt.Println("Replying to ", m.Reply)
+	nc.Publish(m.Reply, data)
+}
+
+
+
+func GetTweetStream(m *nats.Msg)  {
+
+	log.Print("Server message")
+
+	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
+	consumerKey := flags.String("consumer-key", "GVfEgw6AQc9T7kJtgYXTGruA3", "Twitter Consumer Key")
+	consumerSecret := flags.String("consumer-secret", "njhflLVqEmpt54NYFkaDL7vfBMaYbUQJ7mst3UyE36LlURsP6T", "Twitter Consumer Secret")
+	accessToken := flags.String("access-token", "885340272-oidxTehfUKu1KgucgVuvuQGwnffLYjG6Os1QYj0M", "Twitter Access Token")
+	accessSecret := flags.String("access-secret", "YUnTVJeYJfcQKw08VrPnlVGKDKCvhpQRz101sxEX9Xy8Z", "Twitter Access Secret")
+	flags.Parse(os.Args[1:])
+	flagutil.SetFlagsFromEnv(flags, "TWITTER")
+
+	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" {
+		log.Fatal("Consumer key/secret and Access token/secret required")
+	}
+
+	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
+	token := oauth1.NewToken(*accessToken, *accessSecret)
+	// OAuth1 http.Client will automatically authorize Requests
+	httpClient := config.Client(oauth1.NoContext, token)
+
+	// Twitter Client
+	client := twitter.NewClient(httpClient)
+
+	fmt.Println("Starting Stream...")
+
+	// FILTER
+	filterParams := &twitter.StreamFilterParams{
+		Track:         []string{"brexit"},
+		StallWarnings: twitter.Bool(true),
+	}
+	stream, err := client.Streams.Filter(filterParams)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Type shift tweets to string
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
+		ts := tweet.Text
+		log.Print("Log server message stream", ts)
 
-		// Extract the desired data
-		r := &pb.Tweet{
-			CreatedAt:    tweet.CreatedAt,
-			RetweetCount: int64(tweet.RetweetCount),
-			Text:         tweet.Text,
+
+		myTweet := pb.Tweet{}
+		err := proto.Unmarshal(m.Data, &myTweet)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 
-		// Send the data back on the stream
-		if err = stream.Send(r); err != nil {
-			errors <- err
+		myTweet.Text = ts
+		data, err := proto.Marshal(&myTweet)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
+
+		fmt.Println("Replying to ", m.Reply)
+		nc.Publish(m.Reply, data)
+
+
 	}
 
-	// Receive messages from twitter stream, ensure
-	// stream does not exceed stream allowance
-	for message := range ts.Messages {
-		if streamcount >= limit {
-			errors <- nil
-			return nil
-		}
+
+	// Pass the Demux each message or give it the entire Stream.Message
+	for message := range stream.Messages {
 		demux.Handle(message)
-		streamcount++
 	}
 
-	return nil
+	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	log.Println(<-ch)
+
+	fmt.Println("Stopping Stream...")
+
+	stream.Stop()
 }
+
+
 

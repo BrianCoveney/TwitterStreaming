@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
+
 
 	"github.com/golang/protobuf/proto"
 	"github.com/BrianCoveney/TwitterStreaming/transport"
@@ -14,15 +13,12 @@ import (
 	"sync"
 	"github.com/nats-io/nats"
 	"net/http"
-	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
-	"google.golang.org/grpc"
-	"context"
-	"io"
-	"github.com/BrianCoveney/TwitterStreaming/sentiment"
+
+	"github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	//tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 )
 
 var nc *nats.Conn
-var client pb.TwitterRouteClient
 
 
 func main() {
@@ -47,10 +43,12 @@ func main() {
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
+	myTweet := TransportTwitter.Tweet{Text: vars["Text"]}
+
+	//myTweet := tr.Tweet{}
 
 
 	myUser := Transport.User{Id: vars["id"]}
-	curTime := Transport.Time{}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -69,68 +67,55 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 			err := proto.Unmarshal(msg.Data, &myUserWithName)
 			if err == nil {
 				myUser = myUserWithName
+				log.Print("My User", myUser)
 			}
 		}
 		wg.Done()
 	}()
 
+
+	//go func() {
+	//	data, err := proto.Marshal(&myTweet)
+	//	if err != nil || len(myTweet.Text) == 0 {
+	//		fmt.Println(err)
+	//		w.WriteHeader(500)
+	//		fmt.Println("Problem with parsing the tweet Text.")
+	//		return
+	//	}
+	//
+	//	msg, err := nc.Request("Tweet test", data, 100*time.Millisecond)
+	//	if err == nil && msg != nil {
+	//		myTweetWithText := tr.Tweet{}
+	//		err := proto.Unmarshal(msg.Data, &myTweetWithText)
+	//		if err == nil {
+	//			myTweet = myTweetWithText
+	//			log.Print("!!!!!!!!!!!!!!!!! My tweet", myTweet)
+	//		}
+	//	}
+	//	wg.Done()
+	//}()
+
+
 	go func() {
-		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
+		msg, err := nc.Request("Tweet test", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			receivedTime := Transport.Time{}
-			err := proto.Unmarshal(msg.Data, &receivedTime)
+			receivedTweet := TransportTwitter.Tweet{}
+			err := proto.Unmarshal(msg.Data, &receivedTweet)
 			if err == nil {
-				curTime = receivedTime
+				myTweet = receivedTweet
+				log.Print("!!!!!!!!!!!!!!!!! My tweet", myTweet)
 			}
 		}
 		wg.Done()
 	}()
 
-
-	go func() {
-		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
-		if err == nil && msg != nil {
-
-			conn, _ := grpc.Dial("localhost:5253", grpc.WithInsecure())
-			client := pb.NewTwitterRouteClient(conn)
-
-			params := &pb.Params{
-				Track:         []string{"Bitcoin"},
-				Language:      []string{"en"},
-				StallWarnings: false,
-				Maxcount:      100,
-			}
-
-			stream, _ := client.GetTweets(context.Background(), params)
-
-			// Wait for SIGINT and SIGTERM (HIT CTRL-C)
-			ch := make(chan os.Signal)
-			signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-			log.Println(<-ch)
-
-			fmt.Println("Stopping Stream...")
-
-
-			for {
-				tweet, err := stream.Recv()
-				if err == io.EOF {
-					break
-				}
-
-				score, _ := sentiment.Run(tweet.Text)
-
-				tweet.Score = int32(score)
-			}
-
-
-		}
-		wg.Done()
-	}()
 
 
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the time is ")
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ")
+
+
 
 }
