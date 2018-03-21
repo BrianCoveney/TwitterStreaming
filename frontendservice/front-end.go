@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
-	transport "github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/golang/protobuf/proto"
 	"time"
 	"github.com/gorilla/mux"
@@ -38,11 +36,14 @@ func main() {
 
 }
 
+
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	myUser := transport.User{Id: vars["id"]}
-	curTweet := tr.Tweet{}
+	myUser := Transport.User{Id: vars["id"]}
+
+	curTweet := Transport.Tweet{}
+
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -57,7 +58,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 		msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			myUserWithName := transport.User{}
+			myUserWithName := Transport.User{}
 			err := proto.Unmarshal(msg.Data, &myUserWithName)
 			if err == nil {
 				myUser = myUserWithName
@@ -69,9 +70,9 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 
 	go func() {
-		msg, err := nc.Request("TweetTeller", nil, 100*time.Millisecond)
+		msg, err := nc.Request("TwitterByText", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			receivedTweet := tr.Tweet{}
+			receivedTweet := Transport.Tweet{}
 			err := proto.Unmarshal(msg.Data, &receivedTweet)
 			if err == nil {
 				curTweet = receivedTweet
@@ -88,7 +89,5 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id,
 		", the tweet is ", curTweet.Text)
-
-
 
 }
