@@ -3,10 +3,9 @@ package main
 import (
 	//"log"
 
+	tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/golang/protobuf/proto"
-	//pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
-	//tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	"github.com/nats-io/nats"
 	"os"
 	"fmt"
@@ -16,9 +15,7 @@ import (
 	//"os/signal"
 	//"syscall"
 	//"time"
-	//"github.com/BrianCoveney/TwitterStreaming/twitter-route"
-	"time"
-	"github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	"log"
 )
 
 const (
@@ -50,27 +47,20 @@ func main() {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	//twitterTest = make(map[string]string)
-	//twitterTest["1"] = "Bob"
-	//twitterTest["2"] = "John"
-	//twitterTest["3"] = "Dan"
-	//twitterTest["4"] = "Kate"
-
-
-
-	nc.QueueSubscribe("Tweet", "Twitter", replyWithTime)
+	nc.QueueSubscribe("Tweet", "Twitter", replyWithTweet)
 	select {} // Block forever
 }
 
-func replyWithTime(m *nats.Msg) {
-	curTime := TransportTwitter.Tweet{time.Now().Format(time.RFC3339)}
+func replyWithTweet(m *nats.Msg) {
+	curTweet := tr.Tweet{Text: "8pm"}
 
-	data, err := proto.Marshal(&curTime)
+	data, err := proto.Marshal(&curTweet)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Replying to ", m.Reply)
+
+	log.Print("!!!!!!!!!!!!!!!!! *My tweet", curTweet)
 	nc.Publish(m.Reply, data)
 }
 
