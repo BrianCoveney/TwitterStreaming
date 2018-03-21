@@ -14,7 +14,7 @@ import (
 	"github.com/nats-io/nats"
 	"net/http"
 
-	"github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	//"github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	//tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 )
 
@@ -47,7 +47,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	//myTweet := TransportTwitter.Tweet{}
 
-	curTime := TransportTwitter.Tweet{}
+	curTime := Transport.Time{}
 
 
 	myUser := Transport.User{Id: vars["id"]}
@@ -112,10 +112,23 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	//}()
 
 
+	//go func() {
+	//	msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
+	//	if err == nil && msg != nil {
+	//		receivedTime := TransportTwitter.Tweet{}
+	//		err := proto.Unmarshal(msg.Data, &receivedTime)
+	//		if err == nil {
+	//			curTime = receivedTime
+	//			log.Print("!!!!!!!!!!!!!!!!! My tweet", curTime)
+	//		}
+	//	}
+	//	wg.Done()
+	//}()
+
 	go func() {
 		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			receivedTime := TransportTwitter.Tweet{}
+			receivedTime := Transport.Time{}
 			err := proto.Unmarshal(msg.Data, &receivedTime)
 			if err == nil {
 				curTime = receivedTime
@@ -129,7 +142,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ", curTime.Text)
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ", curTime.Time)
 
 
 

@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 
 services:
   nats:
@@ -23,6 +23,16 @@ services:
     build:
       context: "./server"
     entrypoint: /go/server
+    links:
+      - nats
+    environment:
+      - "NATS_URI=nats://nats:4222"
+    depends_on:
+      - nats
+  time-service:
+    build:
+      context: "./timeservice"
+    entrypoint: /go/time-service
     links:
       - nats
     environment:
