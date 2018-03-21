@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/BrianCoveney/TwitterStreaming/transport"
+	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
 	"os"
@@ -37,7 +37,8 @@ func main() {
 
 
 func ReplyWithTweet(m *nats.Msg) {
-	curTweet := Transport.Tweet{Text: "Some text test"}
+	curTweet := tr.Tweet{}
+	curTweet.Text = "more text"
 
 	data, err := proto.Marshal(&curTweet)
 	if err != nil {
@@ -85,37 +86,54 @@ func GetTweetStream(m *nats.Msg)  {
 		log.Fatal(err)
 	}
 
+	//var curTweet = tr.Tweet{}
+
 	// Type shift tweets to string
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
 
-		ts := tweet.Text
-		//log.Print("Print stream as string", ts)
+		curTweet := tr.Tweet{}
+		curTweet.Text = tweet.Text
 
-
-		myTweet := Transport.Tweet{}
-		err := proto.Unmarshal(m.Data, &myTweet)
+		data, err := proto.Marshal(&curTweet)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-
-		myTweet.Text = ts
-		data, err := proto.Marshal(&myTweet)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Println("My Reply to ", m.Reply)
+		fmt.Println("Replying to ", m.Reply)
 		nc.Publish(m.Reply, data)
 
 	}
 
+	// ***** Having this in the inner func will prevent other services having access.
+	// ***** Placed here our frontend-service has access to the string and can display it in a web page,
+	// ***** The demux func above converts the stream to a string, which we require.
+	//curTweet := tr.Tweet{}
+	//curTweet.Text = "Hardcoded text"
+	//data, err := proto.Marshal(&curTweet)
+	//log.Print("TTTTTTTTTTTTTTTTTTTTTtt", curTweet.Text)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Println("Replying to ", m.Reply)
+	//nc.Publish(m.Reply, data)
+	//*******
+
+
+	//data, err := proto.Marshal(&curTweet)
+	//log.Print(curTweet.Text)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Println("Replying to ", m.Reply)
+	//nc.Publish(m.Reply, data)
+
+
+
 	// Pass the Demux each message or give it the entire Stream.Message
-	for message := range stream.Messages {
-		demux.Handle(message)
-	}
+	demux.HandleChan(stream.Messages)
 
 }
 

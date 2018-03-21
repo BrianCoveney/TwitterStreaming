@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"github.com/BrianCoveney/TwitterStreaming/transport"
+	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/golang/protobuf/proto"
 	"time"
 	"github.com/gorilla/mux"
@@ -40,12 +40,13 @@ func main() {
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	myUser := Transport.User{Id: vars["id"]}
+	myUser := tr.User{Id: vars["id"]}
 
-	curTweet := Transport.Tweet{}
+	myTweet := tr.Tweet{}
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
+
 
 	go func() {
 		data, err := proto.Marshal(&myUser)
@@ -58,7 +59,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 		msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			myUserWithName := Transport.User{}
+			myUserWithName := tr.User{}
 			err := proto.Unmarshal(msg.Data, &myUserWithName)
 			if err == nil {
 				myUser = myUserWithName
@@ -69,16 +70,20 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 
+	// have a look at data
 	go func() {
 		msg, err := nc.Request("TwitterByText", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			receivedTweet := Transport.Tweet{}
+			receivedTweet := tr.Tweet{}
 			err := proto.Unmarshal(msg.Data, &receivedTweet)
+			log.Print("!!!!!!!!!!!!!!!!! Hello", receivedTweet)
 			if err == nil {
-				curTweet = receivedTweet
-				log.Print("!!!!!!!!!!!!!!!!! My tweet*", curTweet)
+				myTweet = receivedTweet
+				log.Print("!!!!!!!!!!!!!!!!! My tweet*", myTweet)
 			}
 		}
+		log.Print("!!!!!!!!!!!!!!!!! Hello nill pointer")
+
 		wg.Done()
 	}()
 
@@ -88,6 +93,26 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 
 	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id,
-		", the tweet is ", curTweet.Text)
+		", the tweet is ", myTweet.Text)
 
+	//go func() {
+	//	data, err := proto.Marshal(&myTweet)
+	//	if err != nil {
+	//		fmt.Println(err)
+	//		w.WriteHeader(500)
+	//		fmt.Println("Problem with parsing the tweet Id .")
+	//		return
+	//	}
+	//
+	//	msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
+	//	if err == nil && msg != nil {
+	//		myTwitterWithText := tr.Tweet{}
+	//		err := proto.Unmarshal(msg.Data, &myTwitterWithText)
+	//		if err == nil {
+	//			myTweet = myTwitterWithText
+	//			log.Print("My TTTTTTTTTT", myTweet)
+	//		}
+	//	}
+	//	wg.Done()
+	//}()
 }
