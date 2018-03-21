@@ -43,9 +43,11 @@ func main() {
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	myTweet := TransportTwitter.Tweet{Text: vars["Text"]}
+	//myTweet := TransportTwitter.Tweet{Text: vars["Text"]}
 
-	//myTweet := tr.Tweet{}
+	//myTweet := TransportTwitter.Tweet{}
+
+	curTime := TransportTwitter.Tweet{}
 
 
 	myUser := Transport.User{Id: vars["id"]}
@@ -96,14 +98,27 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	//}()
 
 
+	//go func() {
+	//	msg, err := nc.Request("Tweet test", nil, 100*time.Millisecond)
+	//	if err == nil && msg != nil {
+	//		receivedTweet := TransportTwitter.Tweet{}
+	//		err := proto.Unmarshal(msg.Data, &receivedTweet)
+	//		if err == nil {
+	//			myTweet = receivedTweet
+	//			log.Print("!!!!!!!!!!!!!!!!! My tweet", myTweet)
+	//		}
+	//	}
+	//	wg.Done()
+	//}()
+
+
 	go func() {
-		msg, err := nc.Request("Tweet test", nil, 100*time.Millisecond)
+		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			receivedTweet := TransportTwitter.Tweet{}
-			err := proto.Unmarshal(msg.Data, &receivedTweet)
+			receivedTime := TransportTwitter.Tweet{}
+			err := proto.Unmarshal(msg.Data, &receivedTime)
 			if err == nil {
-				myTweet = receivedTweet
-				log.Print("!!!!!!!!!!!!!!!!! My tweet", myTweet)
+				curTime = receivedTime
 			}
 		}
 		wg.Done()
@@ -114,7 +129,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ")
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ", curTime.Text)
 
 
 

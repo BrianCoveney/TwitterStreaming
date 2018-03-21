@@ -1,20 +1,24 @@
 package main
 
 import (
-	"log"
+	//"log"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/golang/protobuf/proto"
-	pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
-	tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	//pb "github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	//tr "github.com/BrianCoveney/TwitterStreaming/twitter-route"
 	"github.com/nats-io/nats"
 	"os"
 	"fmt"
-	"flag"
-	"github.com/coreos/pkg/flagutil"
-	"github.com/dghubble/oauth1"
-	"os/signal"
-	"syscall"
+	//"flag"
+	//"github.com/coreos/pkg/flagutil"
+	//"github.com/dghubble/oauth1"
+	//"os/signal"
+	//"syscall"
+	//"time"
+	//"github.com/BrianCoveney/TwitterStreaming/twitter-route"
+	"time"
+	"github.com/BrianCoveney/TwitterStreaming/twitter-route"
 )
 
 const (
@@ -28,7 +32,7 @@ var nc *nats.Conn
 var tweets map[string]string
 var client *twitter.Client
 
-var twitterTest map[string]string
+//var twitterTest map[string]string
 
 
 
@@ -46,121 +50,134 @@ func main() {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	twitterTest = make(map[string]string)
-	twitterTest["1"] = "Bob"
-	twitterTest["2"] = "John"
-	twitterTest["3"] = "Dan"
-	twitterTest["4"] = "Kate"
+	//twitterTest = make(map[string]string)
+	//twitterTest["1"] = "Bob"
+	//twitterTest["2"] = "John"
+	//twitterTest["3"] = "Dan"
+	//twitterTest["4"] = "Kate"
 
 
 
-	nc.QueueSubscribe("Tweet", "Twitter", replyWithUserId)
+	nc.QueueSubscribe("Tweet", "Twitter", replyWithTime)
 	select {} // Block forever
 }
 
+func replyWithTime(m *nats.Msg) {
+	curTime := TransportTwitter.Tweet{time.Now().Format(time.RFC3339)}
 
-func replyWithUserId(m *nats.Msg) {
-
-	log.Print("Log message")
-
-	myTweet := tr.Tweet{}
-	err := proto.Unmarshal(m.Data, &myTweet)
+	data, err := proto.Marshal(&curTime)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	myTweet.Text = twitterTest[myTweet.Text]
-	data, err := proto.Marshal(&myTweet)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	fmt.Println("Replying to ", m.Reply)
 	nc.Publish(m.Reply, data)
 }
 
 
-
-func GetTweetStream(m *nats.Msg)  {
-
-	log.Print("Server message")
-
-	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
-	consumerKey := flags.String("consumer-key", "GVfEgw6AQc9T7kJtgYXTGruA3", "Twitter Consumer Key")
-	consumerSecret := flags.String("consumer-secret", "njhflLVqEmpt54NYFkaDL7vfBMaYbUQJ7mst3UyE36LlURsP6T", "Twitter Consumer Secret")
-	accessToken := flags.String("access-token", "885340272-oidxTehfUKu1KgucgVuvuQGwnffLYjG6Os1QYj0M", "Twitter Access Token")
-	accessSecret := flags.String("access-secret", "YUnTVJeYJfcQKw08VrPnlVGKDKCvhpQRz101sxEX9Xy8Z", "Twitter Access Secret")
-	flags.Parse(os.Args[1:])
-	flagutil.SetFlagsFromEnv(flags, "TWITTER")
-
-	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" {
-		log.Fatal("Consumer key/secret and Access token/secret required")
-	}
-
-	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
-	token := oauth1.NewToken(*accessToken, *accessSecret)
-	// OAuth1 http.Client will automatically authorize Requests
-	httpClient := config.Client(oauth1.NoContext, token)
-
-	// Twitter Client
-	client := twitter.NewClient(httpClient)
-
-	fmt.Println("Starting Stream...")
-
-	// FILTER
-	filterParams := &twitter.StreamFilterParams{
-		Track:         []string{"brexit"},
-		StallWarnings: twitter.Bool(true),
-	}
-	stream, err := client.Streams.Filter(filterParams)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Type shift tweets to string
-	demux := twitter.NewSwitchDemux()
-	demux.Tweet = func(tweet *twitter.Tweet) {
-		ts := tweet.Text
-		log.Print("Log server message stream", ts)
-
-
-		myTweet := pb.Tweet{}
-		err := proto.Unmarshal(m.Data, &myTweet)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		myTweet.Text = ts
-		data, err := proto.Marshal(&myTweet)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Println("Replying to ", m.Reply)
-		nc.Publish(m.Reply, data)
-
-
-	}
-
-
-	// Pass the Demux each message or give it the entire Stream.Message
-	for message := range stream.Messages {
-		demux.Handle(message)
-	}
-
-	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
-	ch := make(chan os.Signal)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	log.Println(<-ch)
-
-	fmt.Println("Stopping Stream...")
-
-	stream.Stop()
-}
+//func replyWithUserId(m *nats.Msg) {
+//
+//	log.Print("Log message")
+//
+//	myTweet := tr.Tweet{}
+//	err := proto.Unmarshal(m.Data, &myTweet)
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//
+//	myTweet.Text = twitterTest[myTweet.Text]
+//	data, err := proto.Marshal(&myTweet)
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//
+//	fmt.Println("Replying to ", m.Reply)
+//	nc.Publish(m.Reply, data)
+//}
+//
+//
+//
+//
+//func GetTweetStream(m *nats.Msg)  {
+//
+//	log.Print("Server message")
+//
+//	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
+//	consumerKey := flags.String("consumer-key", "GVfEgw6AQc9T7kJtgYXTGruA3", "Twitter Consumer Key")
+//	consumerSecret := flags.String("consumer-secret", "njhflLVqEmpt54NYFkaDL7vfBMaYbUQJ7mst3UyE36LlURsP6T", "Twitter Consumer Secret")
+//	accessToken := flags.String("access-token", "885340272-oidxTehfUKu1KgucgVuvuQGwnffLYjG6Os1QYj0M", "Twitter Access Token")
+//	accessSecret := flags.String("access-secret", "YUnTVJeYJfcQKw08VrPnlVGKDKCvhpQRz101sxEX9Xy8Z", "Twitter Access Secret")
+//	flags.Parse(os.Args[1:])
+//	flagutil.SetFlagsFromEnv(flags, "TWITTER")
+//
+//	if *consumerKey == "" || *consumerSecret == "" || *accessToken == "" || *accessSecret == "" {
+//		log.Fatal("Consumer key/secret and Access token/secret required")
+//	}
+//
+//	config := oauth1.NewConfig(*consumerKey, *consumerSecret)
+//	token := oauth1.NewToken(*accessToken, *accessSecret)
+//	// OAuth1 http.Client will automatically authorize Requests
+//	httpClient := config.Client(oauth1.NoContext, token)
+//
+//	// Twitter Client
+//	client := twitter.NewClient(httpClient)
+//
+//	fmt.Println("Starting Stream...")
+//
+//	// FILTER
+//	filterParams := &twitter.StreamFilterParams{
+//		Track:         []string{"brexit"},
+//		StallWarnings: twitter.Bool(true),
+//	}
+//	stream, err := client.Streams.Filter(filterParams)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+//	// Type shift tweets to string
+//	demux := twitter.NewSwitchDemux()
+//	demux.Tweet = func(tweet *twitter.Tweet) {
+//		ts := tweet.Text
+//		log.Print("Log server message stream", ts)
+//
+//
+//		myTweet := pb.Tweet{}
+//		err := proto.Unmarshal(m.Data, &myTweet)
+//		if err != nil {
+//			fmt.Println(err)
+//			return
+//		}
+//
+//		myTweet.Text = ts
+//		data, err := proto.Marshal(&myTweet)
+//		if err != nil {
+//			fmt.Println(err)
+//			return
+//		}
+//
+//		fmt.Println("Replying to ", m.Reply)
+//		nc.Publish(m.Reply, data)
+//
+//
+//	}
+//
+//
+//	// Pass the Demux each message or give it the entire Stream.Message
+//	for message := range stream.Messages {
+//		demux.Handle(message)
+//	}
+//
+//	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
+//	ch := make(chan os.Signal)
+//	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+//	log.Println(<-ch)
+//
+//	fmt.Println("Stopping Stream...")
+//
+//	stream.Stop()
+//}
 
 
 
