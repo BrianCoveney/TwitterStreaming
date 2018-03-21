@@ -4,4 +4,5 @@ package Transport;
 message Time {
         string time = 1;
         string day = 2;
+        string year = 3;
 }
