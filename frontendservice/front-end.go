@@ -142,7 +142,8 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ", curTime.Time, "day ", curTime.Day)
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id,
+		", the time is ", curTime.Time, "day ", curTime.Day, "year", curTime.Year)
 
 
 
