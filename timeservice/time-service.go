@@ -32,7 +32,7 @@ func main() {
 }
 
 func replyWithTime(m *nats.Msg) {
-	curTime := Transport.Time{Time: "1pm", Day: "Monday"}
+	curTime := Transport.Time{Time: "1pm", Day: "Monday", Year: "2018"}
 
 	data, err := proto.Marshal(&curTime)
 	if err != nil {
