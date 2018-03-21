@@ -7,7 +7,7 @@ import (
 
 
 	"github.com/golang/protobuf/proto"
-	"github.com/BrianCoveney/TwitterStreaming/transport"
+	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"time"
 	"github.com/gorilla/mux"
 	"sync"
@@ -47,10 +47,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	//myTweet := TransportTwitter.Tweet{}
 
-	curTime := Transport.Time{}
+	curTime := tr.Time{}
 
 
-	myUser := Transport.User{Id: vars["id"]}
+	myUser := tr.User{Id: vars["id"]}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -65,7 +65,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 		msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			myUserWithName := Transport.User{}
+			myUserWithName := tr.User{}
 			err := proto.Unmarshal(msg.Data, &myUserWithName)
 			if err == nil {
 				myUser = myUserWithName
@@ -128,7 +128,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		msg, err := nc.Request("TimeTeller", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {
-			receivedTime := Transport.Time{}
+			receivedTime := tr.Time{}
 			err := proto.Unmarshal(msg.Data, &receivedTime)
 			if err == nil {
 				curTime = receivedTime
@@ -142,7 +142,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ", curTime.Time)
+	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id, ", the tweet is ", curTime.Time, "day ", curTime.Day)
 
 
 

@@ -6,7 +6,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
 	"os"
-	"time"
 
 )
 
@@ -33,7 +32,7 @@ func main() {
 }
 
 func replyWithTime(m *nats.Msg) {
-	curTime := Transport.Time{time.Now().Format(time.RFC3339)}
+	curTime := Transport.Time{Time: "1pm", Day: "Monday"}
 
 	data, err := proto.Marshal(&curTime)
 	if err != nil {
