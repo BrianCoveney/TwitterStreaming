@@ -10,14 +10,11 @@ import (
 	"github.com/coreos/pkg/flagutil"
 	"github.com/dghubble/oauth1"
 	"log"
-	"os/signal"
-	"syscall"
 	"github.com/dghubble/go-twitter/twitter"
 )
 
 
 var nc *nats.Conn
-//var client *twitter.Client
 
 
 func main() {
@@ -34,49 +31,24 @@ func main() {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	nc.QueueSubscribe("TwitterByText", "TwitterTeller", ReplyWithTweet)
+	nc.QueueSubscribe("TwitterByText", "TwitterTeller", GetTweetStream)
 	select {} // Block forever
 }
 
 
 func ReplyWithTweet(m *nats.Msg) {
-	curTweet := Transport.Tweet{Text: "Some text"}
+	curTweet := Transport.Tweet{Text: "Some text test"}
 
 	data, err := proto.Marshal(&curTweet)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Replying to anything", m.Reply)
+	fmt.Println("Replying to ", m.Reply)
 	nc.Publish(m.Reply, data)
 }
 
 
-//func replyWithUserId(m *nats.Msg) {
-//
-//	log.Print("Log message")
-//
-//	myTweet := tr.Tweet{}
-//	err := proto.Unmarshal(m.Data, &myTweet)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	myTweet.Text = twitterTest[myTweet.Text]
-//	data, err := proto.Marshal(&myTweet)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	fmt.Println("Replying to ", m.Reply)
-//	nc.Publish(m.Reply, data)
-//}
-//
-//
-//
-//
 func GetTweetStream(m *nats.Msg)  {
 
 	log.Print("Server message")
@@ -116,8 +88,9 @@ func GetTweetStream(m *nats.Msg)  {
 	// Type shift tweets to string
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
+
 		ts := tweet.Text
-		log.Print("Log server message stream", ts)
+		//log.Print("Print stream as string", ts)
 
 
 		myTweet := Transport.Tweet{}
@@ -134,26 +107,16 @@ func GetTweetStream(m *nats.Msg)  {
 			return
 		}
 
-		fmt.Println("Replying to ", m.Reply)
+		fmt.Println("My Reply to ", m.Reply)
 		nc.Publish(m.Reply, data)
 
-
 	}
-
 
 	// Pass the Demux each message or give it the entire Stream.Message
 	for message := range stream.Messages {
 		demux.Handle(message)
 	}
 
-	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
-	ch := make(chan os.Signal)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	log.Println(<-ch)
-
-	fmt.Println("Stopping Stream...")
-
-	stream.Stop()
 }
 
 
