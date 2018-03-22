@@ -1,4 +1,4 @@
-package sentiment
+package main
 
 import (
 	"github.com/cdipaolo/sentiment"
