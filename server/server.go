@@ -86,9 +86,7 @@ func GetTweetStream(m *nats.Msg)  {
 		log.Fatal(err)
 	}
 
-	//var curTweet = tr.Tweet{}
-
-	// Type shift tweets to string
+	/*** Type shift tweets to string ***/
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
 
@@ -102,8 +100,8 @@ func GetTweetStream(m *nats.Msg)  {
 		}
 		fmt.Println("Replying to ", m.Reply)
 		nc.Publish(m.Reply, data)
-
 	}
+
 
 	// ***** Having this in the inner func will prevent other services having access.
 	// ***** Placed here our frontend-service has access to the string and can display it in a web page,
@@ -131,9 +129,14 @@ func GetTweetStream(m *nats.Msg)  {
 	//nc.Publish(m.Reply, data)
 
 
+	//for v := range stream.Messages {
+	//	log.Print("The channel ", v)
+	//}
 
 	// Pass the Demux each message or give it the entire Stream.Message
 	demux.HandleChan(stream.Messages)
+
+
 
 }
 

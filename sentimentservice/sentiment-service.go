@@ -1,8 +1,9 @@
 package main
 
 import (
+	s "github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/gogo/protobuf/proto"
 	"github.com/nats-io/nats"
-
 	"os"
 	"fmt"
 	"github.com/cdipaolo/sentiment"
@@ -10,7 +11,7 @@ import (
 )
 
 var nc *nats.Conn
-var model sentiment.Models
+
 
 
 func main() {
@@ -27,69 +28,58 @@ func main() {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	nc.QueueSubscribe("SentimentByText", "SentimentTeller", TestPositiveSentenceSentimentShouldPass)
+	nc.QueueSubscribe("SentimentByText", "SentimentTeller", replyWithSentiment)
 	select {} // Block forever
 }
 
 
+func replyWithSentiment(m *nats.Msg) {
 
+	log.Print("Sentiment Log message")
+	//negSentence := "Your mother is an awful lady"
 
-func TestPositiveSentenceSentimentShouldPass(m *nats.Msg) {
+	posSentence := "I had an awesome time watching this movie"
+	posScore := PositiveSentenceSentimentShouldReturn1(posSentence)
 
-	log.Print("Server message")
+	sent := s.Sentiment{Score: int32(posScore)}
 
-	w := []string{
-		"I had an awesome time watching this movie",
-		"Sometimes I like to say hello to strangers and it's fun",
-		"America needs to support the middle class",
-		"Harry Potter is a great movie!",
-		"The quest for love is a long one, but it ends in happiness",
-		"You are a great person",
-		"I love the way you can't talk",
-		"You are a caring person",
-		"I'm quite ambitious, and this job would be a great opportunity for me!",
-		"I'm pretty easy-going.",
-		"I find it easy to get along with people",
-		"I am very hard-working",
-		"I'm very methodical and take care over my work",
+	data, error := proto.Marshal(&sent)
+	if error != nil {
+		fmt.Println(error)
+		return
 	}
+	fmt.Println("Replying to ", m.Reply)
+	nc.Publish(m.Reply, data)
 
-
-
-	for _, sentence := range w {
-		s := model.SentimentAnalysis(sentence, sentiment.English)
-		if s.Score != uint8(1) {
-			fmt.Print("Sentiment of sentence < %v > (returned %v) should be greater than 0.5!\n", sentence, s)
-		} else {
-			fmt.Print("Sentiment of sentence < %v > is valid.\n\tReturned %v\n", sentence, s)
-		}
-	}
-}
-
-func TestNegativeWordSentimentShouldPass1() {
-	w := []string{"not", "resent", "deplorable", "bad", "terrible", "hate", "scary", "terrible", "concerned", "wrong", "rude!!!", "sad", "horrible", "unimpressed", "useless", "offended", "disrespectful"}
-	for _, word := range w {
-		s := model.SentimentAnalysis(word, sentiment.English)
-		if s.Score != uint8(0) {
-			fmt.Print("Sentiment of < %v > (returned %v) should be less than 0.5!\n", word, s)
-		} else {
-
-
-			fmt.Print("Sentiment of < %v > valid\n\tReturned %v\n", word, s)
-		}
-	}
 }
 
 
-func init() {
-	var err error
-
-	//model, err = Train()
-
-	model, err = sentiment.Restore()
+func PositiveSentenceSentimentShouldReturn1(sentence string) uint8 {
+	score, err := RunSentimentAnalysis(sentence)
 	if err != nil {
-		panic(err.Error())
+		log.Println("There was a problem getting the score")
 	}
-
+	return score
 }
 
+
+//func NegativeSentenceSentimentShouldReturn0(sentence string) uint8 {
+//
+//	score, err := RunSentimentAnalysis(sentence)
+//	if err != nil {
+//		fmt.Println("There was a problem getting the score")
+//	}
+//	return score
+//}
+
+
+// Return just the score from "github.com/cdipaolo/sentiment"
+func RunSentimentAnalysis(tweet string) (uint8, error) {
+	model, err := sentiment.Restore()
+	if err != nil {
+		return 0, err
+	}
+	analysis := model.SentimentAnalysis(tweet, sentiment.English)
+
+	return analysis.Score, nil
+}

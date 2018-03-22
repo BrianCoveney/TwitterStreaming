@@ -70,7 +70,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 
-	// have a look at data
 	go func() {
 		msg, err := nc.Request("TwitterByText", nil, 100*time.Millisecond)
 		if err == nil && msg != nil {

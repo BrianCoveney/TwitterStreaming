@@ -9,6 +9,16 @@ services:
     ports:
       - "8222:8222"
     hostname: nats-server
+  sentiment-service:
+      build:
+        context: "./sentimentservice"
+      entrypoint: /go/sentiment-service
+      links:
+        - nats
+      environment:
+        - "NATS_URI=nats://nats:4222"
+      depends_on:
+        - nats
   user-service:
     build:
       context: "./userservice"
