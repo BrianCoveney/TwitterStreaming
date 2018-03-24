@@ -72,19 +72,34 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		msg, err := nc.Request("TwitterByText", nil, 100*time.Millisecond)
-		if err == nil && msg != nil {
+		//if msg == nil {
+		//	log.Fatalf("Error on msg nil: %v", err)
+		//}
+		if err == nil {
+			log.Fatalf("Error on err not nil: %v", err)
+		}
+		if err == nil  {
 			receivedTweet := tr.Tweet{}
+
+
 			err := proto.Unmarshal(msg.Data, &receivedTweet)
-			log.Print("!!!!!!!!!!!!!!!!! Hello", receivedTweet)
+
+			fmt.Println("mfront", receivedTweet)
+
 			if err == nil {
 				myTweet = receivedTweet
-				log.Print("!!!!!!!!!!!!!!!!! My tweet*", myTweet)
+				log.Print("!!!!!!!!!!!!!!!!! My tweet", myTweet)
+			} else {
+				log.Fatalf("Error on unmarshal: %v", err)
 			}
 		}
-		log.Print("!!!!!!!!!!!!!!!!! Hello nill pointer")
+
 
 		wg.Done()
 	}()
+
+
+
 
 
 

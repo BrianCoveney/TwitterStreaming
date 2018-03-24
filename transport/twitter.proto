@@ -1,6 +1,10 @@
 syntax = "proto3";
 package Transport;
 
+
 message Tweet {
-        string text = 1;
+        string CreatedAt = 1;
+        int64  RetweetCount = 2;
+        string Text = 3;
+        int32  Score = 4;
 }

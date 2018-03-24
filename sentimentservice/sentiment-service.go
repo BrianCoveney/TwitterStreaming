@@ -1,7 +1,7 @@
 package main
 
 import (
-	s "github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/gogo/protobuf/proto"
 	"github.com/nats-io/nats"
 	"os"
@@ -13,11 +13,8 @@ import (
 var nc *nats.Conn
 
 
-
 func main() {
-
 	uri := os.Getenv("NATS_URI")
-
 	var err error
 
 	nc, err = nats.Connect(uri)
@@ -25,7 +22,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
 	fmt.Println("Connected to NATS server " + uri)
 
 	nc.QueueSubscribe("SentimentByText", "SentimentTeller", replyWithSentiment)
@@ -41,11 +37,11 @@ func replyWithSentiment(m *nats.Msg) {
 	posSentence := "I had an awesome time watching this movie"
 	posScore := PositiveSentenceSentimentShouldReturn1(posSentence)
 
-	sent := s.Sentiment{Score: int32(posScore)}
+	sent := Transport.Sentiment{Score: int32(posScore)}
 
-	data, error := proto.Marshal(&sent)
-	if error != nil {
-		fmt.Println(error)
+	data, err := proto.Marshal(&sent)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	fmt.Println("Replying to ", m.Reply)
