@@ -10,3 +10,9 @@ Go to project's directory:\
 
 Get required dependencies:\
 ```go get ./...```
+
+Launch application:\
+```docker-compose up```
+
+App front end:\
+```http://localhost:3000/<insert_anything>
