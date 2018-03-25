@@ -78,7 +78,7 @@ func getStream() string {
 	api := auth()
 
 	urlValues := url.Values{}
-	urlValues.Set("track", "Brexit")
+	urlValues.Set("track", "trump")
 	twitterStream := api.PublicStreamFilter(urlValues)
 
 	for t := range twitterStream.C {

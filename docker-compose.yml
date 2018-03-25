@@ -9,6 +9,7 @@ services:
     ports:
       - "8222:8222"
     hostname: nats-server
+
   sentiment-service:
     build:
       context: "./sentimentservice"
@@ -19,6 +20,7 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
+
   user-service:
     build:
       context: "./userservice"
@@ -29,6 +31,20 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
+
+#  Streaming option using git@github.com:dghubble/go-twitter.git
+#  server:
+#    build:
+#      context: "./server"
+#    entrypoint: /go/server
+#    links:
+#      - nats
+#    environment:
+#      - "NATS_URI=nats://nats:4222"
+#    depends_on:
+#      - nats
+
+#  Streaming option using github.com/ChimeraCoder/anaconda
   server-tweet:
     build:
       context: "./tweet-server"
@@ -39,6 +55,7 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
+
   frontend:
     build:
       context: "./frontendservice"

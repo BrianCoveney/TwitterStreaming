@@ -57,6 +57,43 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
+
+	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
+	go func() {
+		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
+		if msg == nil || err != nil  {
+			log.Println("Error {Twitter} on msg nil or err: %v", err)
+		} else {
+			receivedTweet := tr.Tweet{}
+			err := proto.Unmarshal(msg.Data, &receivedTweet)
+			if err == nil {
+				myTweet = receivedTweet
+			}
+		}
+		log.Print("My tweet ", myTweet)
+		wg.Done()
+	}()
+
+
+	go func() {
+		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
+		if msg == nil || err != nil {
+			log.Println("Error on msg {Sentiment} nil or err: %v", err)
+		} else {
+			receivedSentiment := tr.Sentiment{}
+			err := proto.Unmarshal(msg.Data, &receivedSentiment)
+			if err == nil {
+				mySentiment = receivedSentiment
+			}
+		}
+		log.Print("My Sentiment", mySentiment)
+		wg.Done()
+	}()
+
+
+	// Not relevant to this project, but I left this in because it starts the frontend and streaming
+	// with the route http://localhost:3000/<insert_anything>
+	// Reason being, I could focus on other parts of the project.
 	go func() {
 		data, err := proto.Marshal(&myUser)
 		if err != nil || len(myUser.Id) == 0 {
@@ -78,50 +115,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}()
 
-
-	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
-	go func() {
-		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
-		if msg == nil {
-			log.Println("Error {Twitter} on msg nil: %v", err)
-		}
-		if err != nil {
-			log.Println("Error {Twitter} on err not nil: %v", err)
-		}
-		if err == nil  {
-			receivedTweet := tr.Tweet{}
-			err := proto.Unmarshal(msg.Data, &receivedTweet)
-			if err == nil {
-				myTweet = receivedTweet
-			}
-		}
-		log.Print("My tweet ", myTweet)
-
-		wg.Done()
-	}()
-
-
-	go func() {
-		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
-		if msg == nil {
-			log.Println("Error on msg {Sentiment} nil: %v", err)
-		}
-		if err != nil {
-			log.Println("Error {Sentiment} on err not nil: %v", err)
-		}
-		if err == nil  {
-			receivedSentiment := tr.Sentiment{}
-			err := proto.Unmarshal(msg.Data, &receivedSentiment)
-			if err == nil {
-				mySentiment = receivedSentiment
-			}
-		}
-		log.Print("My Sentiment", mySentiment)
-
-		wg.Done()
-	}()
-
-
+	// Blocks until the above 3 goroutines have completed
 	wg.Wait()
 
 	if myTweet.Text == "" {
