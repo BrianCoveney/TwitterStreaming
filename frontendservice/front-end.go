@@ -91,7 +91,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 
-	// Not relevant to this project, but I left this in because it starts the frontend and streaming with the route
+	// Not relevant to this project, but I left this in because it starts the frontend and streaming, with the route
 	// http://localhost:3000/<insert_anything>
 	// Reason being, I could focus on other parts of the project.
 	go func() {
@@ -119,8 +119,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 	if myTweet.Text == "" {
-		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute. " +
-			"If that fails, then please run 'docker-compose up' again")
+		fmt.Fprintln(w, "Please run 'docker-compose up' again")
 	} else {
 		fmt.Fprintln(w, "The the tweet is: \n\t ", myTweet.Text,
 			"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
