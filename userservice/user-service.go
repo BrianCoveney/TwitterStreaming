@@ -6,7 +6,7 @@ import (
 	"github.com/nats-io/nats"
 	"github.com/golang/protobuf/proto"
 	"github.com/BrianCoveney/TwitterStreaming/transport"
-	"log"
+
 )
 
 var users map[string]string
@@ -37,8 +37,6 @@ func main() {
 }
 
 func replyWithUserId(m *nats.Msg) {
-
-	log.Print("Log message")
 
 	myUser := Transport.User{}
 	err := proto.Unmarshal(m.Data, &myUser)

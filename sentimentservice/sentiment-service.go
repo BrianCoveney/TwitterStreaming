@@ -50,7 +50,7 @@ func replyWithSentiment(m *nats.Msg) {
 				myTweet = receivedTweet
 			}
 		}
-		log.Print("My tweet ", myTweet)
+		//log.Print("My tweet ", myTweet)
 
 		wg.Done()
 	}()

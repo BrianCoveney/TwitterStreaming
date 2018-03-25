@@ -70,7 +70,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 				myTweet = receivedTweet
 			}
 		}
-		log.Print("My tweet ", myTweet)
+		//log.Print("My tweet ", myTweet)
 		wg.Done()
 	}()
 
@@ -86,7 +86,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 				mySentiment = receivedSentiment
 			}
 		}
-		log.Print("My Sentiment", mySentiment)
+		//log.Print("My Sentiment", mySentiment)
 		wg.Done()
 	}()
 
@@ -109,7 +109,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 			err := proto.Unmarshal(msg.Data, &myUserWithName)
 			if err == nil {
 				myUser = myUserWithName
-				log.Print("My User", myUser)
+				//log.Print("My User", myUser)
 			}
 		}
 		wg.Done()
