@@ -70,63 +70,34 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 
+	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
 	go func() {
-		msg, err := nc.Request("TwitterByText", nil, 100*time.Millisecond)
-		//if msg == nil {
-		//	log.Fatalf("Error on msg nil: %v", err)
-		//}
-		if err == nil {
-			log.Fatalf("Error on err not nil: %v", err)
+		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
+		if msg == nil {
+			log.Println("Error on msg nil: %v", err)
+		}
+		if err != nil {
+			log.Println("Error on err not nil: %v", err)
 		}
 		if err == nil  {
 			receivedTweet := tr.Tweet{}
-
-
 			err := proto.Unmarshal(msg.Data, &receivedTweet)
-
-			fmt.Println("mfront", receivedTweet)
-
 			if err == nil {
 				myTweet = receivedTweet
-				log.Print("!!!!!!!!!!!!!!!!! My tweet", myTweet)
-			} else {
-				log.Fatalf("Error on unmarshal: %v", err)
 			}
 		}
-
+		log.Print("My tweet ", myTweet)
 
 		wg.Done()
 	}()
 
 
-
-
-
-
 	wg.Wait()
 
+	if myTweet.Text == "" {
+		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute")
+	} else {
+		fmt.Fprintln(w, "The the tweet is: ", myTweet.Text)
+	}
 
-	fmt.Fprintln(w, "Hello ", myUser.Name, " with id ", myUser.Id,
-		", the tweet is ", myTweet.Text)
-
-	//go func() {
-	//	data, err := proto.Marshal(&myTweet)
-	//	if err != nil {
-	//		fmt.Println(err)
-	//		w.WriteHeader(500)
-	//		fmt.Println("Problem with parsing the tweet Id .")
-	//		return
-	//	}
-	//
-	//	msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
-	//	if err == nil && msg != nil {
-	//		myTwitterWithText := tr.Tweet{}
-	//		err := proto.Unmarshal(msg.Data, &myTwitterWithText)
-	//		if err == nil {
-	//			myTweet = myTwitterWithText
-	//			log.Print("My TTTTTTTTTT", myTweet)
-	//		}
-	//	}
-	//	wg.Done()
-	//}()
 }
