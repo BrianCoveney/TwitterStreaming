@@ -119,7 +119,8 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 	if myTweet.Text == "" {
-		fmt.Fprintln(w, "Please run 'docker-compose up' again")
+		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute. " +
+			"If that fails, then please run 'docker-compose up' again")
 	} else {
 		fmt.Fprintln(w, "The the tweet is: \n\t ", myTweet.Text,
 			"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
