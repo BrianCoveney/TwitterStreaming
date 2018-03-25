@@ -15,4 +15,4 @@ Launch application:\
 ```docker-compose up```
 
 App front end:\
-```http://localhost:3000/<insert_anything>
+```http://localhost:3000/<insert_anything>```
