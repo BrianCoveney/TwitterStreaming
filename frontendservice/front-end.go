@@ -91,8 +91,8 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 
-	// Not relevant to this project, but I left this in because it starts the frontend and streaming
-	// with the route http://localhost:3000/<insert_anything>
+	// Not relevant to this project, but I left this in because it starts the frontend and streaming with the route
+	// http://localhost:3000/<insert_anything>
 	// Reason being, I could focus on other parts of the project.
 	go func() {
 		data, err := proto.Marshal(&myUser)
