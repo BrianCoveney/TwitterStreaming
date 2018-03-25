@@ -29,11 +29,19 @@ func main() {
 	}
 	fmt.Println("Connected to NATS server " + uri)
 
-	m := mux.NewRouter()
-	m.HandleFunc("/{id}", handleTwitterUser)
+	server := &http.Server{
+		Addr:    ":3000",
+		Handler: initRoutes(),
+	}
 
-	http.ListenAndServe(":3000", m)
+	server.ListenAndServe()
+}
 
+
+func initRoutes() *mux.Router {
+	router := mux.NewRouter()
+	router.HandleFunc("/{id}", handleTwitterUser)
+	return router
 }
 
 
@@ -44,9 +52,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	myTweet := tr.Tweet{}
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
+	mySentiment := tr.Sentiment{}
 
+	wg := sync.WaitGroup{}
+	wg.Add(3)
 
 	go func() {
 		data, err := proto.Marshal(&myUser)
@@ -74,10 +83,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
 		if msg == nil {
-			log.Println("Error on msg nil: %v", err)
+			log.Println("Error {Twitter} on msg nil: %v", err)
 		}
 		if err != nil {
-			log.Println("Error on err not nil: %v", err)
+			log.Println("Error {Twitter} on err not nil: %v", err)
 		}
 		if err == nil  {
 			receivedTweet := tr.Tweet{}
@@ -92,12 +101,34 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 
+	go func() {
+		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
+		if msg == nil {
+			log.Println("Error on msg {Sentiment} nil: %v", err)
+		}
+		if err != nil {
+			log.Println("Error {Sentiment} on err not nil: %v", err)
+		}
+		if err == nil  {
+			receivedSentiment := tr.Sentiment{}
+			err := proto.Unmarshal(msg.Data, &receivedSentiment)
+			if err == nil {
+				mySentiment = receivedSentiment
+			}
+		}
+		log.Print("My Sentiment", mySentiment)
+
+		wg.Done()
+	}()
+
+
 	wg.Wait()
 
 	if myTweet.Text == "" {
 		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute")
 	} else {
-		fmt.Fprintln(w, "The the tweet is: ", myTweet.Text)
+		fmt.Fprintln(w, "The the tweet is: \n\t ", myTweet.Text,
+			"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
 	}
 
 }

@@ -13,6 +13,8 @@ import (
 )
 
 var nc *nats.Conn
+var tweetText = ""
+
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -27,9 +29,11 @@ func main() {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	nc.QueueSubscribe("TwitterByText", "TwitterTeller", getStream)
+	nc.QueueSubscribe("TwitterByText", "TwitterTeller", publishTweetFromStream)
 	select {} // Block forever
+
 }
+
 
 func readKeys() [] string  {
 	myKeysFile, err := ioutil.ReadFile("my-keys")
@@ -38,6 +42,7 @@ func readKeys() [] string  {
 	}
 	return strings.Split(string(myKeysFile), "\n")
 }
+
 
 func auth() *anaconda.TwitterApi {
 	myKeys := readKeys()
@@ -51,7 +56,25 @@ func auth() *anaconda.TwitterApi {
 	return api
 }
 
-func getStream(m *nats.Msg) {
+
+func publishTweetFromStream(m *nats.Msg) {
+
+	tweet := getStream()
+
+	curTweet := tr.Tweet{}
+	curTweet.Text = tweet
+
+	data, err := proto.Marshal(&curTweet)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Replying to ", m.Reply)
+	nc.Publish(m.Reply, data)
+}
+
+
+func getStream() string {
 	api := auth()
 
 	urlValues := url.Values{}
@@ -62,25 +85,10 @@ func getStream(m *nats.Msg) {
 		switch v := t.(type) {
 		case anaconda.Tweet:
 			tweetText := v.Text
-			//screenName := v.User.ScreenName
-			//fmt.Printf("%-15s: %s\n", screenName, tweetText)
-
-			curTweet := tr.Tweet{}
-			curTweet.Text = tweetText
-
-			data, err := proto.Marshal(&curTweet)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			fmt.Println("Replying to ", m.Reply)
-			fmt.Println("Server message??? ", m.Reply)
-			nc.Publish(m.Reply, data)
-
+			return tweetText
 		}
-
 	}
-
+	return tweetText
 }
 
 

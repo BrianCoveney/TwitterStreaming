@@ -1,13 +1,15 @@
 package main
 
 import (
-	"github.com/BrianCoveney/TwitterStreaming/transport"
+	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/gogo/protobuf/proto"
 	"github.com/nats-io/nats"
 	"os"
 	"fmt"
 	"github.com/cdipaolo/sentiment"
 	"log"
+	"time"
+	"sync"
 )
 
 var nc *nats.Conn
@@ -31,13 +33,42 @@ func main() {
 
 func replyWithSentiment(m *nats.Msg) {
 
-	log.Print("Sentiment Log message")
-	//negSentence := "Your mother is an awful lady"
+	myTweet := tr.Tweet{}
 
-	posSentence := "I had an awesome time watching this movie"
-	posScore := PositiveSentenceSentimentShouldReturn1(posSentence)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 
-	sent := Transport.Sentiment{Score: int32(posScore)}
+	go func() {
+		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
+		if msg == nil {
+			log.Println("Error {Twitter} on msg nil: %v", err)
+		}
+		if err != nil {
+			log.Println("Error {Twitter} on err not nil: %v", err)
+		}
+		if err == nil  {
+			receivedTweet := tr.Tweet{}
+			err := proto.Unmarshal(msg.Data, &receivedTweet)
+			if err == nil {
+				myTweet = receivedTweet
+			}
+		}
+		log.Print("My tweet ", myTweet)
+
+		wg.Done()
+	}()
+	wg.Wait()
+
+	fmt.Println("FROM SENTTTTTTTTTTTTTTt ", myTweet)
+
+
+
+	//posSentence := "I had an awesome time watching this movie"
+	//posScore := GetSentimentScore(posSentence)
+
+	tweetScore := GetSentimentScore(myTweet.Text)
+
+	sent := tr.Sentiment{Score: int32(tweetScore)}
 
 	data, err := proto.Marshal(&sent)
 	if err != nil {
@@ -50,7 +81,7 @@ func replyWithSentiment(m *nats.Msg) {
 }
 
 
-func PositiveSentenceSentimentShouldReturn1(sentence string) uint8 {
+func GetSentimentScore(sentence string) uint8 {
 	score, err := RunSentimentAnalysis(sentence)
 	if err != nil {
 		log.Println("There was a problem getting the score")
