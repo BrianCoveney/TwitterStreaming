@@ -1,22 +1,19 @@
 package main
 
-
 import (
+	"flag"
 	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/coreos/pkg/flagutil"
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
-	"os"
-	"flag"
-	"github.com/coreos/pkg/flagutil"
-	"github.com/dghubble/oauth1"
 	"log"
-	"github.com/dghubble/go-twitter/twitter"
+	"os"
 )
 
-
 var nc *nats.Conn
-
 
 func main() {
 
@@ -36,8 +33,7 @@ func main() {
 	select {} // Block forever
 }
 
-
-func GetTweetStream(m *nats.Msg)  {
+func GetTweetStream(m *nats.Msg) {
 	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
 	consumerKey := flags.String("consumer-key", "GVfEgw6AQc9T7kJtgYXTGruA3", "Twitter Consumer Key")
 	consumerSecret := flags.String("consumer-secret", "njhflLVqEmpt54NYFkaDL7vfBMaYbUQJ7mst3UyE36LlURsP6T", "Twitter Consumer Secret")
@@ -85,5 +81,3 @@ func GetTweetStream(m *nats.Msg)  {
 	demux.HandleChan(stream.Messages)
 
 }
-
-

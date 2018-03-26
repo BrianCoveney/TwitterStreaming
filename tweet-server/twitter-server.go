@@ -3,18 +3,17 @@ package main
 import (
 	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
-	"github.com/golang/protobuf/proto"
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
-	"net/url"
 	"io/ioutil"
-	"strings"
+	"net/url"
 	"os"
+	"strings"
 )
 
 var nc *nats.Conn
 var tweetText = ""
-
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -34,15 +33,13 @@ func main() {
 
 }
 
-
-func readKeys() [] string  {
+func readKeys() []string {
 	myKeysFile, err := ioutil.ReadFile("my-keys")
 	if err != nil {
 		fmt.Println("There was a problem with the twitter api keys")
 	}
 	return strings.Split(string(myKeysFile), "\n")
 }
-
 
 func auth() *anaconda.TwitterApi {
 	myKeys := readKeys()
@@ -55,7 +52,6 @@ func auth() *anaconda.TwitterApi {
 
 	return api
 }
-
 
 func publishTweetFromStream(m *nats.Msg) {
 
@@ -73,7 +69,6 @@ func publishTweetFromStream(m *nats.Msg) {
 	nc.Publish(m.Reply, data)
 }
 
-
 func getStream() string {
 	api := auth()
 
@@ -90,6 +85,3 @@ func getStream() string {
 	}
 	return tweetText
 }
-
-
-

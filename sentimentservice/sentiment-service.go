@@ -1,19 +1,18 @@
 package main
 
 import (
+	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/cdipaolo/sentiment"
 	"github.com/gogo/protobuf/proto"
 	"github.com/nats-io/nats"
-	"os"
-	"fmt"
-	"github.com/cdipaolo/sentiment"
 	"log"
-	"time"
+	"os"
 	"sync"
+	"time"
 )
 
 var nc *nats.Conn
-
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -30,7 +29,6 @@ func main() {
 	select {} // Block forever
 }
 
-
 func replyWithSentiment(m *nats.Msg) {
 
 	myTweet := tr.Tweet{}
@@ -41,7 +39,7 @@ func replyWithSentiment(m *nats.Msg) {
 	go func() {
 		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
 
-		if msg == nil || err != nil  {
+		if msg == nil || err != nil {
 			log.Println("Error {Twitter} on msg nil or err: %v", err)
 		} else {
 			receivedTweet := tr.Tweet{}
@@ -55,7 +53,6 @@ func replyWithSentiment(m *nats.Msg) {
 		wg.Done()
 	}()
 	wg.Wait()
-
 
 	tweetScore := getSentimentScore(myTweet.Text)
 
@@ -72,7 +69,6 @@ func replyWithSentiment(m *nats.Msg) {
 	TestPositiveSentenceSentimentShouldReturnOne()
 }
 
-
 func getSentimentScore(sentence string) uint8 {
 	score, err := getSentimentAnalysis(sentence)
 	if err != nil {
@@ -80,7 +76,6 @@ func getSentimentScore(sentence string) uint8 {
 	}
 	return score
 }
-
 
 // Return just the score from "github.com/cdipaolo/sentiment"
 func getSentimentAnalysis(tweet string) (uint8, error) {
@@ -92,8 +87,6 @@ func getSentimentAnalysis(tweet string) (uint8, error) {
 
 	return analysis.Score, nil
 }
-
-
 
 /** Test methods **/
 func TestNegativeSentenceSentimentShouldReturnZero() uint8 {

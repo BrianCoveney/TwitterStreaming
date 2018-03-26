@@ -2,20 +2,18 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/golang/protobuf/proto"
-	"time"
 	"github.com/gorilla/mux"
-	"sync"
 	"github.com/nats-io/nats"
+	"log"
 	"net/http"
-
+	"os"
+	"sync"
+	"time"
 )
 
 var nc *nats.Conn
-
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -37,13 +35,11 @@ func main() {
 	server.ListenAndServe()
 }
 
-
 func initRoutes() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/{id}", handleTwitterUser)
 	return router
 }
-
 
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -57,11 +53,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
-
 	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
 	go func() {
 		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
-		if msg == nil || err != nil  {
+		if msg == nil || err != nil {
 			log.Println("Error {Twitter} on msg nil or err: %v", err)
 		} else {
 			receivedTweet := tr.Tweet{}
@@ -73,7 +68,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		//log.Print("My tweet ", myTweet)
 		wg.Done()
 	}()
-
 
 	go func() {
 		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
@@ -89,7 +83,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		//log.Print("My Sentiment", mySentiment)
 		wg.Done()
 	}()
-
 
 	// Not relevant to this project, but I left this in because it starts the frontend and streaming, with the route
 	// http://localhost:3000/<insert_anything>
@@ -119,7 +112,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 	if myTweet.Text == "" {
-		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute. " +
+		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute. "+
 			"If that fails, then please run 'docker-compose up' again")
 	} else {
 		fmt.Fprintln(w, "The the tweet is: \n\t ", myTweet.Text,
