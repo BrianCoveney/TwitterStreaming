@@ -37,19 +37,21 @@ func replyWithSentiment(m *nats.Msg) {
 	wg.Add(1)
 
 	go func() {
-		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
+		msg, err := nc.Request("TwitterByText", nil, 10000*time.Millisecond)
 
-		if msg == nil || err != nil {
-			log.Println("Error {Twitter} on msg nil or err: %v", err)
+		if msg == nil  {
+			log.Println("Error on msg {Twitter in Sentiment service} nil : %v", err)
+		}
+		if  err != nil {
+			log.Println("Error on msg {Twitter in Sentiment service} err: %v", err)
 		} else {
 			receivedTweet := tr.Tweet{}
 			err := proto.Unmarshal(msg.Data, &receivedTweet)
 			if err == nil {
 				myTweet = receivedTweet
+				log.Print("My TWEET received in sentiment ", myTweet)
 			}
 		}
-		//log.Print("My tweet ", myTweet)
-
 		wg.Done()
 	}()
 	wg.Wait()
@@ -65,8 +67,8 @@ func replyWithSentiment(m *nats.Msg) {
 	}
 	nc.Publish(m.Reply, data)
 
-	TestNegativeSentenceSentimentShouldReturnZero()
-	TestPositiveSentenceSentimentShouldReturnOne()
+	//TestNegativeSentenceSentimentShouldReturnZero()
+	//TestPositiveSentenceSentimentShouldReturnOne()
 }
 
 func getSentimentScore(sentence string) uint8 {

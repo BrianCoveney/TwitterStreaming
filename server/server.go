@@ -11,6 +11,9 @@ import (
 	"github.com/nats-io/nats"
 	"log"
 	"os"
+	"strings"
+	"io/ioutil"
+	"net/http"
 )
 
 var nc *nats.Conn
@@ -33,12 +36,25 @@ func main() {
 	select {} // Block forever
 }
 
-func GetTweetStream(m *nats.Msg) {
+
+func readKeys() []string {
+	myKeysFile, err := ioutil.ReadFile("my-keys")
+	if err != nil {
+		fmt.Println("There was a problem with the twitter api keys")
+	}
+	return strings.Split(string(myKeysFile), "\n")
+}
+
+func getHttpClient() *http.Client {
+	myKeys := readKeys()
+	cKey, cSecret := myKeys[0], myKeys[1]
+	aToken, aSecret := myKeys[2], myKeys[3]
+
 	flags := flag.NewFlagSet("user-auth", flag.ExitOnError)
-	consumerKey := flags.String("consumer-key", "GVfEgw6AQc9T7kJtgYXTGruA3", "Twitter Consumer Key")
-	consumerSecret := flags.String("consumer-secret", "njhflLVqEmpt54NYFkaDL7vfBMaYbUQJ7mst3UyE36LlURsP6T", "Twitter Consumer Secret")
-	accessToken := flags.String("access-token", "885340272-oidxTehfUKu1KgucgVuvuQGwnffLYjG6Os1QYj0M", "Twitter Access Token")
-	accessSecret := flags.String("access-secret", "YUnTVJeYJfcQKw08VrPnlVGKDKCvhpQRz101sxEX9Xy8Z", "Twitter Access Secret")
+	consumerKey := flags.String("consumer-key", cKey, "Twitter Consumer Key")
+	consumerSecret := flags.String("consumer-secret", cSecret, "Twitter Consumer Secret")
+	accessToken := flags.String("access-token", aToken, "Twitter Access Token")
+	accessSecret := flags.String("access-secret", aSecret, "Twitter Access Secret")
 	flags.Parse(os.Args[1:])
 	flagutil.SetFlagsFromEnv(flags, "TWITTER")
 
@@ -50,6 +66,13 @@ func GetTweetStream(m *nats.Msg) {
 	token := oauth1.NewToken(*accessToken, *accessSecret)
 
 	httpClient := config.Client(oauth1.NoContext, token)
+
+	return httpClient
+}
+
+
+func GetTweetStream(m *nats.Msg) {
+	httpClient := getHttpClient()
 
 	client := twitter.NewClient(httpClient)
 

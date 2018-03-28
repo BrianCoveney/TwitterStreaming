@@ -55,32 +55,42 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
 	go func() {
-		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
-		if msg == nil || err != nil {
-			log.Println("Error {Twitter} on msg nil or err: %v", err)
+		msg, err := nc.Request("TwitterByText", nil, 10000*time.Millisecond)
+		if msg == nil  {
+			log.Println("Error on msg {Twitter} nil : %v", err)
+		}
+		if  err != nil {
+			log.Println("Error on msg {Twitter} err: %v", err)
 		} else {
 			receivedTweet := tr.Tweet{}
 			err := proto.Unmarshal(msg.Data, &receivedTweet)
 			if err == nil {
 				myTweet = receivedTweet
+
+				// This log will only display a tweet on the first page run. If you refresh the page, the above errors
+				// will be thrown.
+				log.Print("My TWEET received ", myTweet)
 			}
 		}
-		//log.Print("My tweet ", myTweet)
 		wg.Done()
 	}()
 
 	go func() {
-		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
-		if msg == nil || err != nil {
-			log.Println("Error on msg {Sentiment} nil or err: %v", err)
+		msg, err := nc.Request("SentimentByText", nil, 10000*time.Millisecond)
+		if msg == nil  {
+			log.Println("Error on msg {Sentiment} nil : %v", err)
+		}
+		if  err != nil {
+			log.Println("Error on msg {Sentiment} err: %v", err)
 		} else {
 			receivedSentiment := tr.Sentiment{}
 			err := proto.Unmarshal(msg.Data, &receivedSentiment)
 			if err == nil {
 				mySentiment = receivedSentiment
+
+				log.Print("My Sentiment received: ", mySentiment)
 			}
 		}
-		//log.Print("My Sentiment", mySentiment)
 		wg.Done()
 	}()
 

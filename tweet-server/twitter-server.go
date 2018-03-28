@@ -34,7 +34,7 @@ func main() {
 }
 
 func readKeys() []string {
-	myKeysFile, err := ioutil.ReadFile("my-keys")
+	myKeysFile, err := ioutil.ReadFile("../credentials/my-keys")
 	if err != nil {
 		fmt.Println("There was a problem with the twitter api keys")
 	}
