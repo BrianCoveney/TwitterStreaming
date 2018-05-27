@@ -4,12 +4,13 @@ import (
 	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
-	"github.com/gogo/protobuf/proto"
+
 )
 
 var nc *nats.Conn
@@ -62,7 +63,9 @@ func publishTweetFromStream(m *nats.Msg) {
 	//fmt.Println("twitter-server ", curTweet.Text)
 
 
-	tweets := &tr.Tweet{Text:tweet}
+	//tweets := &tr.Twitter{TwitterText:tweet}
+	tweets := &tr.Twitter{}
+	tweets.TwitterText = tweet
 
 	//for _, t := range tweet {
 	//	x = append(tweets.TwitterText, t)
