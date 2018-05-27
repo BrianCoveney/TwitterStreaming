@@ -11,6 +11,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"io/ioutil"
 )
 
 var nc *nats.Conn
@@ -55,7 +56,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
 	go func() {
-		msg, err := nc.Request("TwitterByText", nil, 10000*time.Millisecond)
+
+		data, err := ioutil.ReadAll(r.Body)
+
+		msg, err := nc.Request("TwitterByText", data, 10000*time.Millisecond)
 		if msg == nil  {
 			log.Println("Error on msg {Twitter} nil : %v", err)
 		}
@@ -76,7 +80,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
-		msg, err := nc.Request("SentimentByText", nil, 10000*time.Millisecond)
+
+		data, err := ioutil.ReadAll(r.Body)
+
+		msg, err := nc.Request("SentimentByText", data, 10000*time.Millisecond)
 		if msg == nil  {
 			log.Println("Error on msg {Sentiment} nil : %v", err)
 		}
@@ -98,6 +105,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	// http://localhost:3000/<insert_anything>
 	// Reason being, I could focus on other parts of the project.
 	go func() {
+
 		data, err := proto.Marshal(&myUser)
 		if err != nil || len(myUser.Id) == 0 {
 			fmt.Println(err)

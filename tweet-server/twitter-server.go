@@ -4,12 +4,12 @@ import (
 	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/ChimeraCoder/anaconda"
-	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
+	"github.com/gogo/protobuf/proto"
 )
 
 var nc *nats.Conn
@@ -34,7 +34,7 @@ func main() {
 }
 
 func readKeys() []string {
-	myKeysFile, err := ioutil.ReadFile("../credentials/my-keys")
+	myKeysFile, err := ioutil.ReadFile("my-keys")
 	if err != nil {
 		fmt.Println("There was a problem with the twitter api keys")
 	}
@@ -57,31 +57,47 @@ func publishTweetFromStream(m *nats.Msg) {
 
 	tweet := getStream()
 
-	curTweet := tr.Tweet{}
-	curTweet.Text = tweet
+	//curTweet := &tr.Tweet{}
+	//curTweet.Text = tweet
+	//fmt.Println("twitter-server ", curTweet.Text)
 
-	data, err := proto.Marshal(&curTweet)
+
+	tweets := &tr.Tweet{Text:tweet}
+
+	//for _, t := range tweet {
+	//	x = append(tweets.TwitterText, t)
+	//
+	//}
+
+	data, err := proto.Marshal(tweets)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Fails here ", err)
 		return
 	}
 	fmt.Println("Replying to ", m.Reply)
 	nc.Publish(m.Reply, data)
+
+
 }
 
-func getStream() string {
+func getStream() []string {
 	api := auth()
 
 	urlValues := url.Values{}
 	urlValues.Set("track", "brexit")
 	twitterStream := api.PublicStreamFilter(urlValues)
 
+	var tweets []string
+
 	for t := range twitterStream.C {
 		switch v := t.(type) {
 		case anaconda.Tweet:
 			tweetText := v.Text
-			return tweetText
+			fmt.Println("twitter-server-tweet", tweetText)
+			//tweets = append(tweets, tweetText)
+
+			return tweets
 		}
 	}
-	return tweetText
+	return tweets
 }
