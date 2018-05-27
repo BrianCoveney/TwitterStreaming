@@ -4,8 +4,6 @@ package Transport;
 
 message Tweet {
         string Text = 1;
-//        repeated string TweetData = 2 [packed=true];
-
 }
 
 message Twitter {

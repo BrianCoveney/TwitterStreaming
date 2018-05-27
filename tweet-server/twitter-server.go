@@ -4,13 +4,12 @@ import (
 	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
 	"github.com/ChimeraCoder/anaconda"
-	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
-
+	"github.com/gogo/protobuf/proto"
 )
 
 var nc *nats.Conn
@@ -58,21 +57,21 @@ func publishTweetFromStream(m *nats.Msg) {
 
 	tweet := getStream()
 
-	//curTweet := &tr.Tweet{}
-	//curTweet.Text = tweet
-	//fmt.Println("twitter-server ", curTweet.Text)
+	curTweet := &tr.Tweet{}
+	curTweet.Text = tweet
+	fmt.Println("twitter-server ", curTweet.Text)
 
 
 	//tweets := &tr.Twitter{TwitterText:tweet}
-	tweets := &tr.Twitter{}
-	tweets.TwitterText = tweet
+	//tweets := &tr.Twitter{}
+	//tweets.TwitterText = tweet
 
 	//for _, t := range tweet {
 	//	x = append(tweets.TwitterText, t)
 	//
 	//}
 
-	data, err := proto.Marshal(tweets)
+	data, err := proto.Marshal(curTweet)
 	if err != nil {
 		fmt.Println("Fails here ", err)
 		return
@@ -83,14 +82,14 @@ func publishTweetFromStream(m *nats.Msg) {
 
 }
 
-func getStream() []string {
+func getStream() string {
 	api := auth()
 
 	urlValues := url.Values{}
 	urlValues.Set("track", "brexit")
 	twitterStream := api.PublicStreamFilter(urlValues)
 
-	var tweets []string
+	//var tweets []string
 
 	for t := range twitterStream.C {
 		switch v := t.(type) {
@@ -99,8 +98,8 @@ func getStream() []string {
 			fmt.Println("twitter-server-tweet", tweetText)
 			//tweets = append(tweets, tweetText)
 
-			return tweets
+			return tweetText
 		}
 	}
-	return tweets
+	return tweetText
 }

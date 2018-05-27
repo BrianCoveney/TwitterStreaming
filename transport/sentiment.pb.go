@@ -12,6 +12,7 @@ It is generated from these files:
 It has these top-level messages:
 	Sentiment
 	Tweet
+	Twitter
 	User
 */
 package Transport
