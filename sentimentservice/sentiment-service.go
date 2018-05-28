@@ -8,7 +8,6 @@ import (
 	"github.com/nats-io/nats"
 	"log"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -31,48 +30,49 @@ func main() {
 
 func replyWithSentiment(m *nats.Msg) {
 
-	myTweet := tr.Tweet{}
+	myTweetSlice := tr.TweetTwitter{}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 
-	go func() {
-		msg, err := nc.Request("TwitterByText", nil, 10000*time.Millisecond)
+	msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
+	if err != nil {
+		fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+		return
+	}
 
-		if msg == nil  {
-			log.Println("Error on msg {Twitter in Sentiment service} nil : %v", err)
-		}
-		if  err != nil {
-			log.Println("Error on msg {Twitter in Sentiment service} err: %v", err)
-		} else {
-			receivedTweet := tr.Tweet{}
-			err := proto.Unmarshal(msg.Data, &receivedTweet)
-			if err == nil {
-				myTweet = receivedTweet
-				log.Print("My TWEET received in sentiment ", myTweet)
-			}
-		}
-		wg.Done()
-	}()
-	wg.Wait()
+	receivedTweetSlice := tr.TweetTwitter{}
+	err = proto.Unmarshal(msg.Data, &receivedTweetSlice)
+	if err != nil {
+		log.Print("ERROR ", err)
+	}
 
-	tweetScore := getSentimentScore(myTweet.Text)
+	myTweetSlice = receivedTweetSlice
+	log.Print("my_sentiment tweets ", myTweetSlice.TweetText)
 
-	sent := tr.Sentiment{Score: int32(tweetScore)}
+
+
+	// Test positive returns 1
+	//w := []string{
+	//	"I had an awesome time watching this movie",
+	//	"Sometimes I like to say hello to strangers and it's fun",
+	//}
+
+
+	score := getSentimentScore(myTweetSlice.TweetText)
+
+	sent := tr.Sentiment{Score: int32(score)}
 
 	data, err := proto.Marshal(&sent)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Replying to ", m.Reply)
 	nc.Publish(m.Reply, data)
-
-	//TestNegativeSentenceSentimentShouldReturnZero()
-	//TestPositiveSentenceSentimentShouldReturnOne()
 }
 
-func getSentimentScore(sentence string) uint8 {
-	score, err := getSentimentAnalysis(sentence)
+
+func getSentimentScore(tweets []string) uint8 {
+	score, err := getSentimentAnalysis(tweets)
 	if err != nil {
 		log.Println("There was a problem getting the score")
 	}
@@ -80,25 +80,18 @@ func getSentimentScore(sentence string) uint8 {
 }
 
 // Return just the score from "github.com/cdipaolo/sentiment"
-func getSentimentAnalysis(tweet string) (uint8, error) {
+func getSentimentAnalysis(tweets []string) (uint8, error) {
 	model, err := sentiment.Restore()
 	if err != nil {
 		return 0, err
 	}
-	analysis := model.SentimentAnalysis(tweet, sentiment.English)
 
-	return analysis.Score, nil
+	var analysis uint8
+	for _, sentence := range tweets {
+		analysis := model.SentimentAnalysis(sentence, sentiment.English)
+		return analysis.Score, nil
+	}
+
+	return analysis, nil
 }
 
-/** Test methods **/
-func TestNegativeSentenceSentimentShouldReturnZero() uint8 {
-	score, _ := getSentimentAnalysis("I had an terrible time at a bad game of football")
-	fmt.Println("Negative Sentence Sentiment returns ", score)
-	return score
-}
-
-func TestPositiveSentenceSentimentShouldReturnOne() uint8 {
-	score, _ := getSentimentAnalysis("I had an awesome time watching this movie")
-	fmt.Println("Positive Sentence Sentiment returns ", score)
-	return score
-}

@@ -36,7 +36,6 @@ func main() {
 	server.ListenAndServe()
 }
 
-
 func initRoutes() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/{id}", handleTwitterUser)
@@ -52,38 +51,46 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	mySentiment := tr.Sentiment{}
 
-
 	data, _ := ioutil.ReadAll(r.Body)
-	msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
-	if err != nil {
-		fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
-		return
-	}
+	wg := sync.WaitGroup{}
+	wg.Add(3)
 
-	receivedTweetSlice := tr.TweetTwitter{}
-	err = proto.Unmarshal(msg.Data, &receivedTweetSlice)
-	if err != nil {
-		log.Print("ERROR ", err)
-	}
+	go func() {
+		msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
+		if err != nil {
+			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+			return
+		}
 
-	myTweetSlice = receivedTweetSlice
+		receivedTweetSlice := tr.TweetTwitter{}
+		err = proto.Unmarshal(msg.Data, &receivedTweetSlice)
+		if err != nil {
+			log.Print("ERROR ", err)
+		}
 
+		myTweetSlice = receivedTweetSlice
+		wg.Done()
+	}()
 
-	receivedSentiment := tr.Sentiment{}
-	err = proto.Unmarshal(msg.Data, &receivedSentiment)
-	if err == nil {
+	go func() {
+		msg, err := nc.Request("SentimentByText", data, 3000*time.Millisecond)
+		if err != nil {
+			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+			return
+		}
+
+		receivedSentiment := tr.Sentiment{}
+		err = proto.Unmarshal(msg.Data, &receivedSentiment)
+		if err != nil {
+			log.Print("ERROR ", err)
+		}
+
 		mySentiment = receivedSentiment
 		log.Print("My Sentiment received: ", mySentiment)
-	}
+		wg.Done()
+	}()
 
-
-	// Not relevant to this project, but I left this in because it starts the frontend and streaming, with the route
-	// http://localhost:3000/<insert_anything>
-	// Reason being, I could focus on other parts of the project.
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 	go func() {
-
 		data, err := proto.Marshal(&myUser)
 		if err != nil || len(myUser.Id) == 0 {
 			fmt.Println(err)
@@ -106,7 +113,6 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	// Blocks until the above 3 goroutines have completed
 	wg.Wait()
-
 
 	fmt.Fprintln(w, "The the tweet is: \n\t ", myTweetSlice.TweetText,
 		"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
