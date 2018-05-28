@@ -1,0 +1,10 @@
+syntax = "proto3";
+package Transport;
+
+
+message TweetTwitter {
+        repeated string TweetText = 1;
+}
+
+
+

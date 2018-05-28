@@ -6,8 +6,5 @@ message Tweet {
         string Text = 1;
 }
 
-message Twitter {
-        repeated string TwitterText =  1;
-}
 
 

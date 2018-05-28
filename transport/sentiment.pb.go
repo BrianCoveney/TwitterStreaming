@@ -6,13 +6,14 @@ Package Transport is a generated protocol buffer package.
 
 It is generated from these files:
 	sentiment.proto
+	tweettwit.proto
 	twitter.proto
 	user.proto
 
 It has these top-level messages:
 	Sentiment
+	TweetTwitter
 	Tweet
-	Twitter
 	User
 */
 package Transport

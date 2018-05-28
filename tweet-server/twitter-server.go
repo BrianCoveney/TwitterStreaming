@@ -14,6 +14,7 @@ import (
 
 var nc *nats.Conn
 var tweetText = ""
+var tweets []string
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -62,23 +63,22 @@ func publishTweetFromStream(m *nats.Msg) {
 	fmt.Println("twitter-server ", curTweet.Text)
 
 
-	//tweets := &tr.Twitter{TwitterText:tweet}
-	//tweets := &tr.Twitter{}
-	//tweets.TwitterText = tweet
+	tweets = append(tweets, curTweet.Text)
+	fmt.Println("twitter-server SLICE ", tweets)
 
-	//for _, t := range tweet {
-	//	x = append(tweets.TwitterText, t)
-	//
-	//}
+	twSlice := &tr.TweetTwitter{}
+	twSlice.TweetText = tweets
 
-	data, err := proto.Marshal(curTweet)
+
+	data, err := proto.Marshal(twSlice)
 	if err != nil {
-		fmt.Println("Fails here ", err)
+		fmt.Println("Error: ", err)
 		return
 	}
-	fmt.Println("Replying to ", m.Reply)
+	//fmt.Println("Replying to ", m.Reply)
 	nc.Publish(m.Reply, data)
 
+	nc.Flush()
 
 }
 
@@ -89,15 +89,12 @@ func getStream() string {
 	urlValues.Set("track", "brexit")
 	twitterStream := api.PublicStreamFilter(urlValues)
 
-	//var tweets []string
 
 	for t := range twitterStream.C {
 		switch v := t.(type) {
 		case anaconda.Tweet:
 			tweetText := v.Text
 			fmt.Println("twitter-server-tweet", tweetText)
-			//tweets = append(tweets, tweetText)
-
 			return tweetText
 		}
 	}

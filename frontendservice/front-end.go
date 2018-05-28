@@ -15,6 +15,7 @@ import (
 )
 
 var nc *nats.Conn
+var tweetSlice [] string
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -34,7 +35,10 @@ func main() {
 	}
 
 	server.ListenAndServe()
+
+
 }
+
 
 func initRoutes() *mux.Router {
 	router := mux.NewRouter()
@@ -49,41 +53,59 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	myTweet := tr.Tweet{}
 
+	//myTweetSlice := tr.TweetTwitter{}
+
+	var arr []string
+
+
 	mySentiment := tr.Sentiment{}
 
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
+	data, _ := ioutil.ReadAll(r.Body)
+
+
 	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
 	go func() {
 
-		data, err := ioutil.ReadAll(r.Body)
-
-		msg, err := nc.Request("TwitterByText", data, 10000*time.Millisecond)
-		if msg == nil  {
+		msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
+		if msg == nil {
 			log.Println("Error on msg {Twitter} nil : %v", err)
 		}
-		if  err != nil {
+		if err != nil {
 			log.Println("Error on msg {Twitter} err: %v", err)
 		} else {
-			receivedTweet := tr.Tweet{}
-			err := proto.Unmarshal(msg.Data, &receivedTweet)
+			//receivedTweet := tr.Tweet{}
+
+			receivedTweetSlice := tr.TweetTwitter{}
+
+			err := proto.Unmarshal(msg.Data, &receivedTweetSlice)
 			if err == nil {
-				myTweet = receivedTweet
+
+				arr = receivedTweetSlice.TweetText
+
+				log.Print("My TWEET SLICE_1 received ", receivedTweetSlice.TweetText)
+				log.Print("My TWEET SLICE_2 received ", arr)
+
 
 				// This log will only display a tweet on the first page run. If you refresh the page, the above errors
 				// will be thrown.
-				log.Print("My TWEET received ", myTweet)
+				log.Print("My TWEET received ", myTweet.Text)
 			}
+
 		}
+
+		log.Print("My TWEET received ", myTweet.Text)
+		tweetSlice = append(tweetSlice, myTweet.Text)
+
 		wg.Done()
 	}()
 
 	go func() {
 
-		data, err := ioutil.ReadAll(r.Body)
 
-		msg, err := nc.Request("SentimentByText", data, 10000*time.Millisecond)
+		msg, err := nc.Request("SentimentByText", data, 5000*time.Millisecond)
 		if msg == nil  {
 			log.Println("Error on msg {Sentiment} nil : %v", err)
 		}
@@ -129,12 +151,9 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	// Blocks until the above 3 goroutines have completed
 	wg.Wait()
 
-	if myTweet.Text == "" {
-		fmt.Fprintln(w, "No tweets since the last page refresh. Try again in one minute. "+
-			"If that fails, then please run 'docker-compose up' again")
-	} else {
-		fmt.Fprintln(w, "The the tweet is: \n\t ", myTweet.Text,
-			"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
-	}
+
+	fmt.Fprintln(w, "The the tweet is: \n\t ", tweetSlice,
+		"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
+
 
 }
