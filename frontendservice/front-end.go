@@ -15,7 +15,6 @@ import (
 )
 
 var nc *nats.Conn
-var tweetSlice [] string
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -35,8 +34,6 @@ func main() {
 	}
 
 	server.ListenAndServe()
-
-
 }
 
 
@@ -51,81 +48,40 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	myUser := tr.User{Id: vars["id"]}
 
-	myTweet := tr.Tweet{}
-
-	//myTweetSlice := tr.TweetTwitter{}
-
-	var arr []string
-
+	myTweetSlice := tr.TweetTwitter{}
 
 	mySentiment := tr.Sentiment{}
 
-	wg := sync.WaitGroup{}
-	wg.Add(3)
 
 	data, _ := ioutil.ReadAll(r.Body)
+	msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
+	if err != nil {
+		fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+		return
+	}
+
+	receivedTweetSlice := tr.TweetTwitter{}
+	err = proto.Unmarshal(msg.Data, &receivedTweetSlice)
+	if err != nil {
+		log.Print("ERROR ", err)
+	}
+
+	myTweetSlice = receivedTweetSlice
 
 
-	// We need to increase the timeout to 3 seconds, so our subscriber has a chance to receive the message.
-	go func() {
+	receivedSentiment := tr.Sentiment{}
+	err = proto.Unmarshal(msg.Data, &receivedSentiment)
+	if err == nil {
+		mySentiment = receivedSentiment
+		log.Print("My Sentiment received: ", mySentiment)
+	}
 
-		msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
-		if msg == nil {
-			log.Println("Error on msg {Twitter} nil : %v", err)
-		}
-		if err != nil {
-			log.Println("Error on msg {Twitter} err: %v", err)
-		} else {
-			//receivedTweet := tr.Tweet{}
-
-			receivedTweetSlice := tr.TweetTwitter{}
-
-			err := proto.Unmarshal(msg.Data, &receivedTweetSlice)
-			if err == nil {
-
-				arr = receivedTweetSlice.TweetText
-
-				log.Print("My TWEET SLICE_1 received ", receivedTweetSlice.TweetText)
-				log.Print("My TWEET SLICE_2 received ", arr)
-
-
-				// This log will only display a tweet on the first page run. If you refresh the page, the above errors
-				// will be thrown.
-				log.Print("My TWEET received ", myTweet.Text)
-			}
-
-		}
-
-		log.Print("My TWEET received ", myTweet.Text)
-		tweetSlice = append(tweetSlice, myTweet.Text)
-
-		wg.Done()
-	}()
-
-	go func() {
-
-
-		msg, err := nc.Request("SentimentByText", data, 5000*time.Millisecond)
-		if msg == nil  {
-			log.Println("Error on msg {Sentiment} nil : %v", err)
-		}
-		if  err != nil {
-			log.Println("Error on msg {Sentiment} err: %v", err)
-		} else {
-			receivedSentiment := tr.Sentiment{}
-			err := proto.Unmarshal(msg.Data, &receivedSentiment)
-			if err == nil {
-				mySentiment = receivedSentiment
-
-				log.Print("My Sentiment received: ", mySentiment)
-			}
-		}
-		wg.Done()
-	}()
 
 	// Not relevant to this project, but I left this in because it starts the frontend and streaming, with the route
 	// http://localhost:3000/<insert_anything>
 	// Reason being, I could focus on other parts of the project.
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
 
 		data, err := proto.Marshal(&myUser)
@@ -152,8 +108,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 
 
-	fmt.Fprintln(w, "The the tweet is: \n\t ", tweetSlice,
+	fmt.Fprintln(w, "The the tweet is: \n\t ", myTweetSlice.TweetText,
 		"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
-
 
 }
