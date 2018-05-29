@@ -19,7 +19,7 @@ type TweetTwitter struct {
 func (m *TweetTwitter) Reset()                    { *m = TweetTwitter{} }
 func (m *TweetTwitter) String() string            { return proto.CompactTextString(m) }
 func (*TweetTwitter) ProtoMessage()               {}
-func (*TweetTwitter) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{0} }
+func (*TweetTwitter) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
 
 func (m *TweetTwitter) GetTweetText() []string {
 	if m != nil {
@@ -32,9 +32,9 @@ func init() {
 	proto.RegisterType((*TweetTwitter)(nil), "Transport.TweetTwitter")
 }
 
-func init() { proto.RegisterFile("tweettwit.proto", fileDescriptor1) }
+func init() { proto.RegisterFile("tweettwit.proto", fileDescriptor2) }
 
-var fileDescriptor1 = []byte{
+var fileDescriptor2 = []byte{
 	// 89 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2f, 0x29, 0x4f, 0x4d,
 	0x2d, 0x29, 0x29, 0xcf, 0x2c, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x0c, 0x29, 0x4a,

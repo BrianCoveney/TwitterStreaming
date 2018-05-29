@@ -1,0 +1,6 @@
+syntax = "proto3";
+package Transport;
+
+message HackerNews {
+    repeated string News = 1;
+}

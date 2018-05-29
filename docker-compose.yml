@@ -47,6 +47,17 @@ services:
     depends_on:
       - nats
 
+  hacker-news:
+    build:
+      context: "./hackernewsservice"
+    entrypoint: /go/hackernews-service
+    links:
+      - nats
+    environment:
+      - "NATS_URI=nats://nats:4222"
+    depends_on:
+      - nats
+
 # end streaming options
 
   frontend:

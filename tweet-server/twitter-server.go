@@ -15,7 +15,6 @@ import (
 var nc *nats.Conn
 var tweetText = ""
 var tweets []string
-var tweets2 []string
 
 func main() {
 	uri := os.Getenv("NATS_URI")
