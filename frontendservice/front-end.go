@@ -11,8 +11,8 @@ import (
 	"os"
 	"sync"
 	"time"
-	"io/ioutil"
 	"html/template"
+	"io/ioutil"
 )
 
 var nc *nats.Conn
@@ -49,12 +49,14 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	mySentiment := tr.Sentiment{}
 
+	myHackerNewsSlice := tr.HackerNews{}
+
 	data, _ := ioutil.ReadAll(r.Body)
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
-		msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
+		msg, err := nc.Request("TwitterByText", data, 2000*time.Millisecond)
 		if err != nil {
 			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
 			return
@@ -71,7 +73,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
-		msg, err := nc.Request("SentimentByText", data, 3000*time.Millisecond)
+		msg, err := nc.Request("SentimentByText", data, 2000*time.Millisecond)
 		if err != nil {
 			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
 			return
@@ -84,17 +86,34 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		mySentiment = receivedSentiment
-		log.Print("My Sentiment received: ", mySentiment)
 		wg.Done()
 	}()
 
-	// Blocks until the above 2 goroutines have completed
+	go func() {
+		msg, err := nc.Request("HackerNewsByText", data, 2000*time.Millisecond)
+		if err != nil {
+			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+			return
+		}
+
+		receivedHackerNewsSlice := tr.HackerNews{}
+		err = proto.Unmarshal(msg.Data, &receivedHackerNewsSlice)
+		if err != nil {
+			log.Print("ERROR ", err)
+		}
+
+		myHackerNewsSlice = receivedHackerNewsSlice
+		wg.Done()
+	}()
+
+	// Blocks until the above 3 goroutines have completed
 	wg.Wait()
 
 	// Create map to hold variables to pass into html template
 	m := map[string]interface{}{
 		"MyTweets": myTweetSlice.TweetText,
 		"MyScore":  mySentiment.Score,
+		"MyNews" : myHackerNewsSlice.News,
 	}
 
 	t, _ := template.ParseFiles("view.html")

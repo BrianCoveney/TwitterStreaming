@@ -6,6 +6,8 @@ import (
 	"os"
 	"github.com/peterhellberg/hn"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
+	"github.com/gogo/protobuf/proto"
+
 )
 
 var nc *nats.Conn
@@ -24,7 +26,7 @@ func main()  {
 
 	fmt.Println("Connected to NATS server " + uri)
 
-	nc.QueueSubscribe("TwitterByText", "TwitterTeller", publishHackerNewsFromStream)
+	nc.QueueSubscribe("HackerNewsByText", "HackerNewsTeller", publishHackerNewsFromStream)
 	select {} // Block forever
 }
 
@@ -35,18 +37,27 @@ func publishHackerNewsFromStream(m *nats.Msg) {
 		panic(err)
 	}
 
-	myHackerNews := &tr.HackerNews{}
-	news = myHackerNews.News
+	myHackerNews := tr.HackerNews{}
 
-	for i, id := range ids[:10] {
+	for _, id := range ids[:10] {
 		item, err := hn.Item(id)
 		if err != nil {
 			panic(err)
 		}
 
-		news = append(news, item.Text)
-		fmt.Println("NEWS: ", news)
+		news = append(news, item.URL)
 
-		fmt.Println(i, "–", item.Title, "\n   ", item.URL, "\n")
+		//fmt.Println("HACKERNEWS", news)
+
+		myHackerNews.News = news
 	}
+
+	data, err := proto.Marshal(&myHackerNews)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	nc.Publish(m.Reply, data)
+
+	nc.Flush()
 }
