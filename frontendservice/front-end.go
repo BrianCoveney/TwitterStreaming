@@ -12,9 +12,12 @@ import (
 	"sync"
 	"time"
 	"io/ioutil"
+	"html/template"
 )
 
 var nc *nats.Conn
+
+
 
 func main() {
 	uri := os.Getenv("NATS_URI")
@@ -114,7 +117,14 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	// Blocks until the above 3 goroutines have completed
 	wg.Wait()
 
-	fmt.Fprintln(w, "The the tweet is: \n\t ", myTweetSlice.TweetText,
-		"\n\nWith a sentiment score of: \n\t ", mySentiment.Score)
 
+	// Create map to hold variables to pass into html template
+	m := map[string]interface{}{
+		"MyTweets": myTweetSlice.TweetText,
+		"MyScore":  mySentiment.Score,
+	}
+
+	t, _ := template.ParseFiles("view.html")
+	t.Execute(w, m)
 }
+

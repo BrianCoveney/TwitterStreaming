@@ -47,6 +47,7 @@ func replyWithSentiment(m *nats.Msg) {
 
 	myTweetSlice = receivedTweetSlice
 	log.Print("my_sentiment tweets ", myTweetSlice.TweetText)
+	fmt.Println("my_sentiment tweets ", myTweetSlice.TweetText)
 
 
 
@@ -58,6 +59,7 @@ func replyWithSentiment(m *nats.Msg) {
 
 
 	score := getSentimentScore(myTweetSlice.TweetText)
+	fmt.Println("my_sentiment score ", score)
 
 	sent := tr.Sentiment{Score: int32(score)}
 
