@@ -21,17 +21,6 @@ services:
     depends_on:
       - nats
 
-  user-service:
-    build:
-      context: "./userservice"
-    entrypoint: /go/user-service
-    links:
-      - nats
-    environment:
-      - "NATS_URI=nats://nats:4222"
-    depends_on:
-      - nats
-
 # Comment / Uncomment one these two twitter streaming options
 
 #  Streaming option using git@github.com:dghubble/go-twitter.git

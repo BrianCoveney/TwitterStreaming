@@ -17,8 +17,6 @@ import (
 
 var nc *nats.Conn
 
-
-
 func main() {
 	uri := os.Getenv("NATS_URI")
 
@@ -41,14 +39,11 @@ func main() {
 
 func initRoutes() *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("/{id}", handleTwitterUser)
+	router.HandleFunc("/{sentiment}", handleTwitterUser)
 	return router
 }
 
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	myUser := tr.User{Id: vars["id"]}
 
 	myTweetSlice := tr.TweetTwitter{}
 
@@ -56,7 +51,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	data, _ := ioutil.ReadAll(r.Body)
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(2)
 
 	go func() {
 		msg, err := nc.Request("TwitterByText", data, 3000*time.Millisecond)
@@ -93,30 +88,8 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}()
 
-	go func() {
-		data, err := proto.Marshal(&myUser)
-		if err != nil || len(myUser.Id) == 0 {
-			fmt.Println(err)
-			w.WriteHeader(500)
-			fmt.Println("Problem with parsing the user Id .")
-			return
-		}
-
-		msg, err := nc.Request("UserNameById", data, 100*time.Millisecond)
-		if err == nil && msg != nil {
-			myUserWithName := tr.User{}
-			err := proto.Unmarshal(msg.Data, &myUserWithName)
-			if err == nil {
-				myUser = myUserWithName
-				//log.Print("My User", myUser)
-			}
-		}
-		wg.Done()
-	}()
-
-	// Blocks until the above 3 goroutines have completed
+	// Blocks until the above 2 goroutines have completed
 	wg.Wait()
-
 
 	// Create map to hold variables to pass into html template
 	m := map[string]interface{}{
