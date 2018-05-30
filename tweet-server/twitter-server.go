@@ -60,10 +60,8 @@ func publishTweetFromStream(m *nats.Msg) {
 
 	curTweet := &tr.Tweet{}
 	curTweet.Text = tweet
-	fmt.Println("twitter-server ", curTweet.Text)
 
 	tweets = append(tweets, curTweet.Text)
-	fmt.Println("twitter-server SLICE ", tweets)
 
 	twSlice := &tr.TweetTwitter{}
 	twSlice.TweetText = tweets

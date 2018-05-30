@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 	"html/template"
-	"io/ioutil"
 )
 
 var nc *nats.Conn
@@ -51,14 +50,14 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	myHackerNewsSlice := tr.HackerNews{}
 
-	data, _ := ioutil.ReadAll(r.Body)
+	//data, _ := ioutil.ReadAll(r.Body)
 	wg := sync.WaitGroup{}
 	wg.Add(3)
 
 	go func() {
-		msg, err := nc.Request("TwitterByText", data, 2000*time.Millisecond)
+		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
 		if err != nil {
-			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+			fmt.Println("Something went wrong with TwitterByText. Waiting 2 seconds before retrying:", err)
 			return
 		}
 
@@ -73,9 +72,9 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
-		msg, err := nc.Request("SentimentByText", data, 2000*time.Millisecond)
+		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
 		if err != nil {
-			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+			fmt.Println("Something went wrong with SentimentByText. Waiting 2 seconds before retrying:", err)
 			return
 		}
 
@@ -90,9 +89,9 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
-		msg, err := nc.Request("HackerNewsByText", data, 2000*time.Millisecond)
+		msg, err := nc.Request("HackerNewsByText", nil, 3000*time.Millisecond)
 		if err != nil {
-			fmt.Println("Something went wrong. Waiting 2 seconds before retrying:", err)
+			fmt.Println("Something went wrong HackerNewsByText. Waiting 2 seconds before retrying:", err)
 			return
 		}
 
@@ -103,6 +102,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		myHackerNewsSlice = receivedHackerNewsSlice
+
 		wg.Done()
 	}()
 
@@ -113,7 +113,7 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 	m := map[string]interface{}{
 		"MyTweets": myTweetSlice.TweetText,
 		"MyScore":  mySentiment.Score,
-		"MyNews" : myHackerNewsSlice.News,
+		"MyNews": myHackerNewsSlice.News,
 	}
 
 	t, _ := template.ParseFiles("view.html")
