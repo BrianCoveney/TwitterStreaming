@@ -25,16 +25,16 @@ func main() {
 	}
 	fmt.Println("Connected to NATS server " + uri)
 
-	nc.QueueSubscribe("SentimentByText", "SentimentTeller", replyWithSentiment)
+	nc.QueueSubscribe("TwitterSentimentByText", "TwitterSentiment", replyWithSentimentForTwitter)
+	nc.QueueSubscribe("HackerNewsSentimentByText", "HackerNewsSentiment", replyWithSentimentForHackerNews)
+
 	select {} // Block forever
 }
 
-func replyWithSentiment(m *nats.Msg) {
+func replyWithSentimentForTwitter(m *nats.Msg) {
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-
-
 	go func() {
 		myTweetSlice := tr.TweetTwitter{}
 		msg, err := nc.Request("TwitterByText", nil, 3000*time.Millisecond)
@@ -51,21 +51,54 @@ func replyWithSentiment(m *nats.Msg) {
 		myTweetSlice = receivedTweetSlice
 
 		score := getSentimentScore(myTweetSlice.TweetText)
-		sent := tr.Sentiment{Score: int32(score)}
+		twSent := tr.Sentiment{Score: int32(score)}
 
-		data, err := proto.Marshal(&sent)
+		data, err := proto.Marshal(&twSent)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		fmt.Println("Replying to ", m.Reply)
 		nc.Publish(m.Reply, data)
+		nc.Flush()
 		wg.Done()
 	}()
-
 	wg.Wait()
+}
 
+func replyWithSentimentForHackerNews(m *nats.Msg) {
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		myHackerNewsSlice := tr.HackerNews{}
+		msg, err := nc.Request("HackerNewsByText", nil, 3000*time.Millisecond)
+		if err != nil {
+			fmt.Println("Something went wrong with HackerNewsByText. Waiting 2 seconds before retrying:", err)
+			return
+		}
+
+		receivedHackerNewsSlice := tr.HackerNews{}
+		err = proto.Unmarshal(msg.Data, &receivedHackerNewsSlice)
+		if err != nil {
+			log.Print("ERROR ", err)
+		}
+		myHackerNewsSlice = receivedHackerNewsSlice
+
+		score := getSentimentScore(myHackerNewsSlice.News)
+		nhSent := tr.Sentiment{Score: int32(score)}
+
+		data, err := proto.Marshal(&nhSent)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("Replying to ", m.Reply)
+		nc.Publish(m.Reply, data)
+		nc.Flush()
+		wg.Done()
+	}()
+	wg.Wait()
 }
 
 

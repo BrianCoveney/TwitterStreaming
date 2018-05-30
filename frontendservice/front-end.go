@@ -44,11 +44,11 @@ func initRoutes() *mux.Router {
 
 func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
-	myTweetSlice := tr.TweetTwitter{}
+	tweetSlice := tr.TweetTwitter{}
+	tweetSentiment := tr.Sentiment{}
 
-	mySentiment := tr.Sentiment{}
-
-	myHackerNewsSlice := tr.HackerNews{}
+	hackerNewsSlice := tr.HackerNews{}
+	hackerNewsSentiment := tr.Sentiment{}
 
 	//data, _ := ioutil.ReadAll(r.Body)
 	wg := sync.WaitGroup{}
@@ -67,14 +67,14 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 			log.Print("ERROR ", err)
 		}
 
-		myTweetSlice = receivedTweetSlice
+		tweetSlice = receivedTweetSlice
 		wg.Done()
 	}()
 
 	go func() {
-		msg, err := nc.Request("SentimentByText", nil, 3000*time.Millisecond)
+		msg, err := nc.Request("TwitterSentimentByText", nil, 3000*time.Millisecond)
 		if err != nil {
-			fmt.Println("Something went wrong with SentimentByText. Waiting 2 seconds before retrying:", err)
+			fmt.Println("Something went wrong with Twitter SentimentByText. Waiting 2 seconds before retrying:", err)
 			return
 		}
 
@@ -84,14 +84,14 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 			log.Print("ERROR ", err)
 		}
 
-		mySentiment = receivedSentiment
+		tweetSentiment = receivedSentiment
 		wg.Done()
 	}()
 
 	go func() {
 		msg, err := nc.Request("HackerNewsByText", nil, 3000*time.Millisecond)
 		if err != nil {
-			fmt.Println("Something went wrong HackerNewsByText. Waiting 2 seconds before retrying:", err)
+			fmt.Println("Something went wrong with HackerNewsByText. Waiting 2 seconds before retrying:", err)
 			return
 		}
 
@@ -101,8 +101,25 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 			log.Print("ERROR ", err)
 		}
 
-		myHackerNewsSlice = receivedHackerNewsSlice
+		hackerNewsSlice = receivedHackerNewsSlice
 
+		wg.Done()
+	}()
+
+	go func() {
+		msg, err := nc.Request("HackerNewsSentimentByText", nil, 3000*time.Millisecond)
+		if err != nil {
+			fmt.Println("Something went wrong with HNews SentimentByText. Waiting 2 seconds before retrying:", err)
+			return
+		}
+
+		receivedSentiment := tr.Sentiment{}
+		err = proto.Unmarshal(msg.Data, &receivedSentiment)
+		if err != nil {
+			log.Print("ERROR ", err)
+		}
+
+		hackerNewsSentiment = receivedSentiment
 		wg.Done()
 	}()
 
@@ -111,9 +128,10 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 
 	// Create map to hold variables to pass into html template
 	m := map[string]interface{}{
-		"MyTweets": myTweetSlice.TweetText,
-		"MyScore":  mySentiment.Score,
-		"MyNews": myHackerNewsSlice.News,
+		"Tweets": tweetSlice.TweetText,
+		"TweetScore":  tweetSentiment.Score,
+		"News":   hackerNewsSlice.News,
+		"NewsScore": hackerNewsSentiment.Score,
 	}
 
 	t, _ := template.ParseFiles("view.html")
