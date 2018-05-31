@@ -60,6 +60,12 @@ services:
     build:
       context: "./repository"
     entrypoint: /go/repository-service
+    links:
+      - nats
+    environment:
+      - "NATS_URI=nats://nats:4222"
+    depends_on:
+      - nats
     ports:
       - "9090:9090"
 
