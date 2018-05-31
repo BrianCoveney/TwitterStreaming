@@ -17,6 +17,6 @@ Launch application:\
 App frontend V1:\
 ```http://localhost:3000/sentiment```
 
-App frontend V2\
+App frontend V2:\
 ```http://localhost:9090/sentiment```
 
