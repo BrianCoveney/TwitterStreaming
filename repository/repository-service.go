@@ -25,10 +25,9 @@ const (
 )
 
 type Sent struct {
-	Date         time.Time
-	TwitterScore int32 `json:"score"`
-	HackerNewsScore int32 `json:"score"`
-
+	Date         		time.Time
+	TwitterScore 		int32 `json:"score"`
+	HackerNewsScore 	int32 `json:"score"`
 }
 
 type MongoStore struct {
@@ -59,7 +58,6 @@ func main() {
 	router.HandleFunc("/sentiment", sentGetHandler).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":9090", router))
-
 }
 
 func initialiseMongo() (session *mgo.Session) {
@@ -76,7 +74,6 @@ func initialiseMongo() (session *mgo.Session) {
 	if err != nil {
 		panic(err)
 	}
-
 	return
 }
 
@@ -110,8 +107,7 @@ func sentGetHandler(w http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}()
 
-
-	// Get twitter sentiment
+	// Get hacker news sentiment
 	hackerNewsSentiment := tr.Sentiment{}
 	go func() {
 		msg, err := nc.Request("HackerNewsSentimentByText", nil, 3000*time.Millisecond)
@@ -128,7 +124,6 @@ func sentGetHandler(w http.ResponseWriter, r *http.Request) {
 		wg.Done()
 	}()
 	wg.Wait()
-
 
 	s := Sent{
 		Date:         		time.Now().UTC(),
@@ -151,5 +146,4 @@ func sentGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	t, _ := template.ParseFiles("view.html")
 	t.Execute(w, m)
-
 }
