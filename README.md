@@ -14,5 +14,9 @@ Get required dependencies:\
 Launch application:\
 ```docker-compose up```
 
-App front end:\
-```http://localhost:3000/<insert_anything>```
+App frontend V1:\
+```http://localhost:3000/sentiment```
+
+App frontend V2
+```http://localhost:9090/sentiment```
+
