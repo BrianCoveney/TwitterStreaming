@@ -3,14 +3,13 @@ package main
 import (
 	"fmt"
 	tr "github.com/BrianCoveney/TwitterStreaming/transport"
-	"github.com/golang/protobuf/proto"
 	"github.com/nats-io/nats"
 	"os"
 	"github.com/peterhellberg/hn"
+	"github.com/golang/protobuf/proto"
 )
 
 var nc *nats.Conn
-var news []string
 
 func main()  {
 	uri := os.Getenv("NATS_URI")
@@ -36,24 +35,26 @@ func publishHackerNewsFromStream(m *nats.Msg) {
 		panic(err)
 	}
 
-	myHackerNews := tr.HackerNews{}
+	myHackerNews := &tr.HackerNews{}
+	var news []string
 
 	for _, id := range ids[:10] {
 		item, err := hn.Item(id)
 		if err != nil {
 			panic(err)
 		}
-		news = append(news, item.Title)
 
+		news = append(news, item.Title)
 		myHackerNews.News = news
 
-		data, err := proto.Marshal(&myHackerNews)
+		data, err := proto.Marshal(myHackerNews)
 		if err != nil {
 			fmt.Println("Error: ", err)
 			return
 		}
 		nc.Publish(m.Reply, data)
-
-		nc.Flush()
 	}
+
+	nc.Flush()
+
 }

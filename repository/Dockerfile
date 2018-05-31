@@ -6,7 +6,7 @@ WORKDIR /go
 COPY . .
 
 RUN go get -d -v ./...
-RUN go build front-end.go
+RUN go build repository-service.go
 
-EXPOSE 3000
-ENTRYPOINT ["/go/front-end"]
+EXPOSE 9090
+ENTRYPOINT ["/go/repository-service"]

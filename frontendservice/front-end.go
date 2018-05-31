@@ -96,6 +96,9 @@ func handleTwitterUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		receivedHackerNewsSlice := tr.HackerNews{}
+
+		//fmt.Println("RECEIVED HN: ", receivedHackerNewsSlice)
+
 		err = proto.Unmarshal(msg.Data, &receivedHackerNewsSlice)
 		if err != nil {
 			log.Print("ERROR ", err)

@@ -8,4 +8,4 @@ COPY . .
 RUN go get -d -v ./...
 RUN go build hackernews-service.go
 
-ENTRYPOINT ["/go/frontendservice"]
+ENTRYPOINT ["/go/hackernews-service"]
