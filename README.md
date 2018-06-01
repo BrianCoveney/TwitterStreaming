@@ -14,9 +14,13 @@ Get required dependencies:\
 Launch application:\
 ```docker-compose up```
 
+App frontend V2:\
+```http://localhost:9090/sentiment```
+
 App frontend V1:\
 ```http://localhost:3000/sentiment```
 
-App frontend V2:\
-```http://localhost:9090/sentiment```
+Note: to reload ```http://localhost:3000/sentiment``` you will need ro run docker-compose up again.
+
+
 
