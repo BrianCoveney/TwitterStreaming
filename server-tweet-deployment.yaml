@@ -6,8 +6,8 @@ metadata:
     kompose.version: 1.13.0 (HEAD)
   creationTimestamp: null
   labels:
-    io.kompose.service: frontend
-  name: frontend
+    io.kompose.service: server-tweet
+  name: server-tweet
 spec:
   replicas: 1
   strategy: {}
@@ -15,16 +15,14 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        io.kompose.service: frontend
+        io.kompose.service: server-tweet
     spec:
       containers:
       - env:
         - name: NATS_URI
           value: nats://nats:4222
-        image: bricov/sentiment_frontend
-        name: frontend
-        ports:
-        - containerPort: 3000
+        image: bricov/sentiment_server
+        name: server-tweet
         resources: {}
       restartPolicy: Always
 status: {}

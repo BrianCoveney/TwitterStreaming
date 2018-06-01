@@ -6,14 +6,14 @@ metadata:
     kompose.version: 1.13.0 (HEAD)
   creationTimestamp: null
   labels:
-    io.kompose.service: frontend
-  name: frontend
+    io.kompose.service: mongodb
+  name: mongodb
 spec:
   ports:
-  - name: "3000"
-    port: 3000
-    targetPort: 3000
+  - name: "27017"
+    port: 27017
+    targetPort: 27017
   selector:
-    io.kompose.service: frontend
+    io.kompose.service: mongodb
 status:
   loadBalancer: {}
