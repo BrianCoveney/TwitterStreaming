@@ -1,5 +1,8 @@
 # TwitterStreaming
 
+![alt text](https://github.com/BrianCoveney/TwitterStreaming/blob/master/diagram.png)
+
+
 ## Setting up 
 
 Clone repo:\
