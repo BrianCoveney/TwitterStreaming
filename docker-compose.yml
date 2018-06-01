@@ -13,7 +13,7 @@ services:
   sentiment-service:
     build:
       context: "./sentimentservice"
-    entrypoint: /go/sentiment-service
+    image: bricov/sentiment_sentimentservice
     links:
       - nats
     environment:
@@ -23,8 +23,8 @@ services:
 
   server-tweet:
     build:
-      context: "./tweet-server"
-    entrypoint: /go/twitter-server
+      context: "./twitter-server"
+    image: bricov/sentiment_server
     links:
       - nats
     environment:
@@ -35,7 +35,7 @@ services:
   hacker-news:
     build:
       context: "./hackernewsservice"
-    entrypoint: /go/hackernews-service
+    image: bricov/sentiment_hackernews
     links:
       - nats
     environment:
@@ -46,7 +46,7 @@ services:
   frontend:
     build:
       context: "./frontendservice"
-    entrypoint: /go/front-end
+    image: bricov/sentiment_frontend
     links:
       - nats
     environment:
@@ -59,7 +59,7 @@ services:
   repository:
     build:
       context: "./repository"
-    entrypoint: /go/repository-service
+    image: bricov/sentiment_repository
     links:
       - nats
     environment:

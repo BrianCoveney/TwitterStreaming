@@ -137,13 +137,14 @@ func sentGetHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	// Create map to hold variables to pass into html template
+	// Create map to hold variables
 	m := map[string]interface{}{
 		"Date":       s.Date,
 		"TweetScore": s.TwitterScore,
 		"HackerNewsScore": s.HackerNewsScore,
 	}
 
+	// We pass the map into the html template
 	t, _ := template.ParseFiles("view.html")
 	t.Execute(w, m)
 }
