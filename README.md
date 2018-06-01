@@ -1,6 +1,6 @@
 # TwitterStreaming
 
-![alt text](https://github.com/BrianCoveney/TwitterStreaming/blob/master/diagram.png =100X100)
+![alt text](https://github.com/BrianCoveney/TwitterStreaming/blob/master/diagram.png| width=100)
 
 
 ## Setting up 
