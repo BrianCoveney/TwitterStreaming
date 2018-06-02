@@ -25,6 +25,7 @@ spec:
         name: repository
         ports:
         - containerPort: 9090
+        # Just spin & wait forever
         command: [ "/bin/bash", "-c", "--" ]
         args: [ "while true; do sleep 30; done;" ]
         resources: {}

@@ -23,6 +23,7 @@ spec:
           value: nats://nats:4222
         image: bricov/sentiment_server
         name: server-tweet
+        # Just spin & wait forever
         command: [ "/bin/bash", "-c", "--" ]
         args: [ "while true; do sleep 30; done;" ]
         resources: {}
