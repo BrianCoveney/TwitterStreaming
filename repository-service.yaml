@@ -9,10 +9,11 @@ metadata:
     io.kompose.service: repository
   name: repository
 spec:
+  type: NodePort
   ports:
   - name: "9090"
     port: 9090
-    targetPort: 9090
+    nodePort: 30001
   selector:
     io.kompose.service: repository
 status:
