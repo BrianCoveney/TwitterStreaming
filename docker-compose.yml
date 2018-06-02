@@ -1,5 +1,4 @@
 version: "3"
-
 services:
   nats:
     image: 'nats:latest'
@@ -9,7 +8,6 @@ services:
     ports:
       - "8222:8222"
     hostname: nats-server
-
   sentiment-service:
     build:
       context: "./sentimentservice"
@@ -20,7 +18,6 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
-
   server-tweet:
     build:
       context: "./twitter-server"
@@ -31,7 +28,6 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
-
   hacker-news:
     build:
       context: "./hackernewsservice"
@@ -42,7 +38,6 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
-
   frontend:
     build:
       context: "./frontendservice"
@@ -55,7 +50,6 @@ services:
       - nats
     ports:
       - "3000:3000"
-
   repository:
     build:
       context: "./repository"
@@ -68,7 +62,6 @@ services:
       - nats
     ports:
       - "9090:9090"
-
   mongodb:
     image: mongo:3.6.1
     container_name: sentiment-mongodb

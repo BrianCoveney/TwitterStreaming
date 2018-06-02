@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   annotations:
-    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.cmd: kompose convert
     kompose.version: 1.13.0 (HEAD)
   creationTimestamp: null
   labels:
@@ -25,6 +25,7 @@ spec:
         name: repository
         ports:
         - containerPort: 9090
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
         resources: {}
-      restartPolicy: Always
 status: {}
