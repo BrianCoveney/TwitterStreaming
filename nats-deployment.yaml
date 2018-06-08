@@ -18,14 +18,13 @@ spec:
         io.kompose.service: nats
     spec:
       containers:
-      - command:
-        - /gnatsd
-        - -DV
-        image: nats:latest
+      - image: bricov/sentiment_nats
         name: nats
         ports:
+        - containerPort: 4222
+          protocol: TCP
         - containerPort: 8222
+          protocol: TCP
         resources: {}
-      hostname: nats-server
       restartPolicy: Always
 status: {}
