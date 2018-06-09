@@ -10,11 +10,12 @@ metadata:
   name: nats
 spec:
   ports:
-  - name: "8222"
-    port: 8222
-  - name: "4222"
+  - name: client
     port: 4222
+  - name: cluster
+    port: 6222
+  - name: monitor
+    port: 8222
   selector:
     io.kompose.service: nats
-status:
-  loadBalancer: {}
+

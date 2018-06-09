@@ -18,16 +18,14 @@ spec:
         io.kompose.service: nats
     spec:
       containers:
-      - command:
-        - /gnatsd
-        - -DV
-        image: nats:latest
+      - image: nats:latest
         name: nats
         ports:
         - containerPort: 4222
-          protocol: TCP
+          name: client
+        - containerPort: 6222
+          name: cluster
         - containerPort: 8222
-          protocol: TCP
-        resources: {}
+          name: monitor
       restartPolicy: Always
 status: {}
