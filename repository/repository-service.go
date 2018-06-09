@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	hosts      = "sentiment-mongodb:27017"
+	hosts      = "mongodb-repository:27017"
 	database   = "sentiment_db"
 	username   = ""
 	password   = ""

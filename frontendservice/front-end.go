@@ -29,7 +29,7 @@ func main() {
 	fmt.Println("Connected to NATS server " + uri)
 
 	server := &http.Server{
-		Addr:    ":3000",
+		Addr:    ":80",
 		Handler: initRoutes(),
 	}
 

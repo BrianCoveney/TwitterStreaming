@@ -8,5 +8,5 @@ COPY . .
 RUN go get -d -v ./...
 RUN go build front-end.go
 
-EXPOSE 3000
+EXPOSE 8080
 ENTRYPOINT ["/go/front-end"]

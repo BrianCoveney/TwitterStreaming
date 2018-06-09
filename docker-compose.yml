@@ -7,7 +7,6 @@ services:
       - "4222"
     ports:
       - "8222:8222"
-    hostname: nats-server
   sentiment-service:
     build:
       context: "./sentimentservice"
@@ -41,6 +40,8 @@ services:
   frontend:
     build:
       context: "./frontendservice"
+    ports:
+      - "80:80"
     image: bricov/sentiment_frontend
     links:
       - nats
@@ -48,12 +49,14 @@ services:
       - "NATS_URI=nats://nats:4222"
     depends_on:
       - nats
-    ports:
-      - "3000:3000"
   repository:
     build:
       context: "./repository"
     image: bricov/sentiment_repository
+    links:
+      - mongodb-repository
+    environment:
+      DATASTORE_ADDR: datastore:27017
     links:
       - nats
     environment:
@@ -62,18 +65,11 @@ services:
       - nats
     ports:
       - "9090:9090"
-  mongodb:
-    image: mongo:3.6.1
-    container_name: sentiment-mongodb
-    volumes:
-      - mongodb:/data/db
-      - mongodb_config:/data/configdb
+  mongodb-repository:
+    image: mongo:latest
     ports:
-      - "27017:27017"
-    command: mongod
-volumes:
-  mongodb:
-  mongodb_config:
+      - 27017:27017
+
 
 
 
